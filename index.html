@@ -206,14 +206,6 @@
         </div>
       </div>
       <div class="option-group">
-        <div class="option-label">난이도</div>
-        <div class="option-btns" id="level-btns" style="grid-template-columns: 1fr;">
-          <button class="opt-btn selected" data-level="1">쉬움 (1~2자리)</button>
-          <button class="opt-btn" data-level="2">보통 (2~3자리)</button>
-          <button class="opt-btn" data-level="3">어려움 (3~4자리)</button>
-        </div>
-      </div>
-      <div class="option-group">
         <div class="option-label">문제 표시 방식</div>
         <div class="option-btns" id="format-btns">
           <button class="opt-btn selected" data-format="horizontal">가로 (45 - 23)</button>
@@ -478,7 +470,7 @@ function wireToggleGroup(id, attr) {
     btn.classList.add('selected');
   });
 }
-['op-btns', 'level-btns', 'format-btns', 'mulc-level-btns', 'divc-type-btns', 'divc-level-btns',
+['op-btns', 'format-btns', 'mulc-level-btns', 'divc-type-btns', 'divc-level-btns',
  'growth-type-btns', 'growth-level-btns', 'table-size-btns', 'count-btns',
  'pp-type-btns', 'pp-level-btns', 'index-level-btns', 'avg-level-btns',
  'share-type-btns', 'share-level-btns'].forEach(id => wireToggleGroup(id));
@@ -1065,11 +1057,11 @@ const MODE_HINT = {
 
 /* ---------- 시작하기 ---------- */
 const LEVEL_BTN_ID = {
-  basic: 'level-btns',
+  basic: null,
   mulCompare: 'mulc-level-btns',
   divCompare: 'divc-level-btns',
   growthCompare: 'growth-level-btns',
-  tableFill: 'level-btns',
+  tableFill: null,
   ppCompare: 'pp-level-btns',
   indexCompare: 'index-level-btns',
   avgCompare: 'avg-level-btns',
@@ -1079,7 +1071,9 @@ document.getElementById('start-btn').addEventListener('click', () => {
   state.mode = document.querySelector('#mode-btns .mode-btn.selected').dataset.mode;
   const opChoice = selectedOf('op-btns', 'op');
   state.ops = opChoice === 'mix' ? ['+', '-', '*', '/'] : [opChoice];
-  state.level = Number(document.querySelector(`#${LEVEL_BTN_ID[state.mode]} .opt-btn.selected`).dataset.level);
+  const levelBtnId = LEVEL_BTN_ID[state.mode];
+  const levelEl = levelBtnId ? document.querySelector(`#${levelBtnId} .opt-btn.selected`) : null;
+  state.level = levelEl ? Number(levelEl.dataset.level) : 3;
   state.format = selectedOf('format-btns', 'format');
   state.divType = document.querySelector('#divc-type-btns .opt-btn.selected').dataset.divtype;
   state.growthType = document.querySelector('#growth-type-btns .opt-btn.selected').dataset.growthtype;
