@@ -181,6 +181,16 @@
     margin: 28px 0;
     letter-spacing: 1px;
   }
+  .vert-problem {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: right;
+    display: inline-block;
+    margin: 0 auto;
+    white-space: pre;
+  }
   #quiz-answer {
     font-size: 1.6rem;
     padding: 18px;
@@ -241,6 +251,14 @@
     </div>
 
     <div class="option-group">
+      <div class="option-label">문제 표시 방식</div>
+      <div class="option-btns" id="format-btns">
+        <button class="opt-btn selected" data-format="horizontal">가로 (45 - 23)</button>
+        <button class="opt-btn" data-format="vertical">세로 (필기 방식)</button>
+      </div>
+    </div>
+
+    <div class="option-group">
       <div class="option-label">문제 개수</div>
       <div class="option-btns" id="count-btns">
         <button class="opt-btn selected" data-count="10">10문제</button>
@@ -274,15 +292,17 @@
 
 <script>
 const DIFFICULTY = {
-  1: { addSub: [1, 99], mul: [1, 9], divDivisor: [2, 9], divQuotient: [2, 20] },
-  2: { addSub: [10, 999], mul: [2, 99], divDivisor: [2, 20], divQuotient: [2, 50] },
-  3: { addSub: [100, 9999], mul: [10, 999], divDivisor: [2, 50], divQuotient: [5, 99] },
+  // mulSmall: 곱셈에서 항상 30 이하로 제한하는 쪽 (한 자리 수도 섞여서 두자리x한자리도 나옴)
+  1: { addSub: [1, 99], mulSmall: [1, 9], mulBig: [1, 9], divDivisor: [2, 9], divQuotient: [2, 20] },
+  2: { addSub: [10, 999], mulSmall: [2, 30], mulBig: [2, 99], divDivisor: [2, 20], divQuotient: [2, 50] },
+  3: { addSub: [100, 9999], mulSmall: [2, 30], mulBig: [10, 999], divDivisor: [2, 50], divQuotient: [5, 99] },
 };
 
 let state = {
   ops: ['mix'],
   level: 1,
   count: 10,
+  format: 'horizontal',
   current: 0,
   results: [],
   currentAnswer: null,
@@ -302,22 +322,36 @@ function makeProblem(opSymbol, level) {
   const lv = DIFFICULTY[level];
   if (opSymbol === '+') {
     const a = rand(...lv.addSub), b = rand(...lv.addSub);
-    return { text: `${a} + ${b}`, answer: a + b };
+    return { a, b, opSymbol: '+', answer: a + b };
   }
   if (opSymbol === '-') {
     let a = rand(...lv.addSub), b = rand(...lv.addSub);
     if (a < b) [a, b] = [b, a];
-    return { text: `${a} - ${b}`, answer: a - b };
+    return { a, b, opSymbol: '-', answer: a - b };
   }
   if (opSymbol === '*') {
-    const a = rand(...lv.mul), b = rand(...lv.mul);
-    return { text: `${a} × ${b}`, answer: a * b };
+    let a = rand(...lv.mulSmall), b = rand(...lv.mulBig);
+    if (Math.random() < 0.5) [a, b] = [b, a];
+    return { a, b, opSymbol: '×', answer: a * b };
   }
   // 나눗셈: 나누어떨어지도록 몫 기준 생성
   const divisor = rand(...lv.divDivisor);
   const quotient = rand(...lv.divQuotient);
   const dividend = divisor * quotient;
-  return { text: `${dividend} ÷ ${divisor}`, answer: quotient };
+  return { a: dividend, b: divisor, opSymbol: '÷', answer: quotient };
+}
+
+function renderProblem(p, format) {
+  if (format === 'horizontal') {
+    return { isHtml: false, content: `${p.a} ${p.opSymbol} ${p.b}` };
+  }
+  const aStr = String(p.a), bStr = String(p.b);
+  const width = Math.max(aStr.length, bStr.length);
+  const line1 = '  ' + aStr.padStart(width, ' ');
+  const line2 = p.opSymbol + ' ' + bStr.padStart(width, ' ');
+  const rule = '-'.repeat(Math.max(line1.length, line2.length));
+  const text = `${line1}\n${line2}\n${rule}`;
+  return { isHtml: true, content: `<pre class="vert-problem">${text}</pre>` };
 }
 
 function updateThemeIcon() {
@@ -357,12 +391,19 @@ document.getElementById('count-btns').addEventListener('click', (e) => {
   document.querySelectorAll('#count-btns .opt-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
 });
+document.getElementById('format-btns').addEventListener('click', (e) => {
+  const btn = e.target.closest('.opt-btn');
+  if (!btn) return;
+  document.querySelectorAll('#format-btns .opt-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+});
 
 document.getElementById('start-btn').addEventListener('click', () => {
   const opChoice = document.querySelector('#op-btns .opt-btn.selected').dataset.op;
   state.ops = opChoice === 'mix' ? ['+', '-', '*', '/'] : [opChoice];
   state.level = Number(document.querySelector('#level-btns .opt-btn.selected').dataset.level);
   state.count = Number(document.querySelector('#count-btns .opt-btn.selected').dataset.count);
+  state.format = document.querySelector('#format-btns .opt-btn.selected').dataset.format;
   state.current = 0;
   state.results = [];
   show('screen-quiz');
@@ -377,11 +418,17 @@ function nextProblem() {
   }
   const opSymbol = pick(state.ops);
   const p = makeProblem(opSymbol, state.level);
-  state.currentText = p.text;
+  state.currentText = `${p.a} ${p.opSymbol} ${p.b}`;
   state.currentAnswer = p.answer;
   state.startTime = performance.now();
   document.getElementById('quiz-progress').textContent = `${state.current} / ${state.count}`;
-  document.getElementById('quiz-problem').textContent = `${p.text} = ?`;
+  const rendered = renderProblem(p, state.format);
+  const problemEl = document.getElementById('quiz-problem');
+  if (rendered.isHtml) {
+    problemEl.innerHTML = rendered.content;
+  } else {
+    problemEl.textContent = `${rendered.content} = ?`;
+  }
   document.getElementById('feedback').textContent = '';
   document.getElementById('feedback').className = '';
   const input = document.getElementById('quiz-answer');
