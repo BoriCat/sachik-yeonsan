@@ -441,20 +441,38 @@ const MULC_LEVELS = {
   2: { intRange: [1000, 9999], decDigits: 1, decRange: [10.0, 99.9] },
   3: { intRange: [1000, 9999], decDigits: 2, decRange: [10.0, 99.99] },
 };
-function genMulCompare(level) {
-  const cfg = MULC_LEVELS[level];
+function genMulCompareOnce(cfg) {
   // 정수와 소수가 서로 반대 방향으로 크도록 강제한다 (한쪽이 두 값 다 크면 계산 없이도 눈으로 보여서 훈련 의미가 없다.
-  // 실제 비타민 자료 예시를 확인해보면 8문항 전부 이 교차 구조였다).
+  // 실제 비타민 자료 8문항 전부 이 교차 구조였다).
   const step = cfg.decDigits === 1 ? 0.1 : 0.01;
   let intA = rand(...cfg.intRange), intB = rand(...cfg.intRange), tries = 0;
   while (intA === intB && tries < 20) { intB = rand(...cfg.intRange); tries++; }
   const smallDec = randFloat(cfg.decRange[0], cfg.decRange[1] - step, cfg.decDigits);
   const bigDec = randFloat(smallDec + step, cfg.decRange[1], cfg.decDigits);
   const [decA, decB] = intA > intB ? [smallDec, bigDec] : [bigDec, smallDec];
-  const a = { intPart: intA, decPart: decA, product: intA * decA };
-  const b = { intPart: intB, decPart: decB, product: intB * decB };
+  return {
+    a: { intPart: intA, decPart: decA, product: intA * decA },
+    b: { intPart: intB, decPart: decB, product: intB * decB },
+  };
+}
+function genMulCompare(level) {
+  const cfg = MULC_LEVELS[level];
+  // 곱 차이만 좁혀도(diff% 12~35) "정수만 크면 이긴다"는 눈대중이 20,000회 중 59.9%로 여전히 잘 맞았다
+  // (정수 격차와 소수 격차 중 어느 쪽이 실제로 승부를 가르는지가 한쪽으로 쏠리기 쉬움).
+  // 그래서 "정수 쪽이 이기는 경우"와 "소수 쪽이 이기는 경우"가 정확히 절반씩 나오도록 직접 강제한다.
+  const wantIntWins = Math.random() < 0.5;
+  let { a, b } = genMulCompareOnce(cfg), tries = 0;
+  function diffPct() { return Math.abs(a.product - b.product) / Math.min(a.product, b.product) * 100; }
+  function intSideWins() {
+    const intBiggerIsA = a.intPart > b.intPart;
+    const productBiggerIsA = a.product > b.product;
+    return intBiggerIsA === productBiggerIsA;
+  }
+  while (!(diffPct() >= 12 && diffPct() <= 35 && intSideWins() === wantIntWins) && tries < 80) {
+    ({ a, b } = genMulCompareOnce(cfg)); tries++;
+  }
   const correctChoice = a.product > b.product ? 'left' : 'right';
-  const diffPercent = Math.abs(a.product - b.product) / Math.min(a.product, b.product) * 100;
+  const diffPercent = diffPct();
   const leftText = `${a.intPart} × ${a.decPart}`;
   const rightText = `${b.intPart} × ${b.decPart}`;
   return {
