@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="color-scheme" content="light dark">
-<title>사칙연산 암산 연습</title>
+<title>인적성 암산 연습</title>
 <script>
   (function () {
     var saved = localStorage.getItem('theme');
@@ -29,64 +29,21 @@
   }
   @media (prefers-color-scheme: light) {
     :root {
-      --bg: #f5f6f8;
-      --fg: #1c1c1e;
-      --sub: #6b6b6f;
-      --card-bg: #ffffff;
-      --card-border: #d7d9dd;
-      --card-selected-bg: #2f6fed;
-      --card-selected-border: #2f6fed;
-      --label-fg: #444;
-      --btn-secondary-bg: #e6e8eb;
-      --btn-secondary-fg: #333;
-      --wrong-item-fg: #333;
-      --wrong-item-border: #e2e4e8;
+      --bg: #f5f6f8; --fg: #1c1c1e; --sub: #6b6b6f; --card-bg: #ffffff;
+      --card-border: #d7d9dd; --card-selected-bg: #2f6fed; --card-selected-border: #2f6fed;
+      --label-fg: #444; --btn-secondary-bg: #e6e8eb; --btn-secondary-fg: #333;
+      --wrong-item-fg: #333; --wrong-item-border: #e2e4e8;
     }
   }
-  /* 앱 안 토글 버튼으로 고른 테마 — 폰 설정보다 우선 적용됨 */
   html[data-theme="dark"] {
-    --bg: #101418;
-    --fg: #eee;
-    --sub: #999;
-    --card-bg: #1c2228;
-    --card-border: #333;
-    --card-selected-bg: #2f6fed;
-    --card-selected-border: #2f6fed;
-    --label-fg: #bbb;
-    --btn-secondary-bg: #2a2f36;
-    --btn-secondary-fg: #ccc;
-    --wrong-item-fg: #ccc;
-    --wrong-item-border: #2a2f36;
+    --bg: #101418; --fg: #eee; --sub: #999; --card-bg: #1c2228; --card-border: #333;
+    --card-selected-bg: #2f6fed; --card-selected-border: #2f6fed; --label-fg: #bbb;
+    --btn-secondary-bg: #2a2f36; --btn-secondary-fg: #ccc; --wrong-item-fg: #ccc; --wrong-item-border: #2a2f36;
   }
   html[data-theme="light"] {
-    --bg: #f5f6f8;
-    --fg: #1c1c1e;
-    --sub: #6b6b6f;
-    --card-bg: #ffffff;
-    --card-border: #d7d9dd;
-    --card-selected-bg: #2f6fed;
-    --card-selected-border: #2f6fed;
-    --label-fg: #444;
-    --btn-secondary-bg: #e6e8eb;
-    --btn-secondary-fg: #333;
-    --wrong-item-fg: #333;
-    --wrong-item-border: #e2e4e8;
-  }
-  #theme-toggle {
-    position: fixed;
-    top: 14px;
-    right: 14px;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 1px solid var(--card-border);
-    background: var(--card-bg);
-    color: var(--fg);
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
+    --bg: #f5f6f8; --fg: #1c1c1e; --sub: #6b6b6f; --card-bg: #ffffff; --card-border: #d7d9dd;
+    --card-selected-bg: #2f6fed; --card-selected-border: #2f6fed; --label-fg: #444;
+    --btn-secondary-bg: #e6e8eb; --btn-secondary-fg: #333; --wrong-item-fg: #333; --wrong-item-border: #e2e4e8;
   }
   * { box-sizing: border-box; }
   body {
@@ -98,163 +55,216 @@
     justify-content: center;
     min-height: 100vh;
   }
-  #app {
-    width: 100%;
-    max-width: 480px;
-    padding: 20px;
-    padding-bottom: 60px;
+  #theme-toggle {
+    position: fixed; top: 14px; right: 14px; width: 40px; height: 40px;
+    border-radius: 50%; border: 1px solid var(--card-border); background: var(--card-bg);
+    color: var(--fg); font-size: 1.1rem; display: flex; align-items: center; justify-content: center; z-index: 10;
   }
-  h1 {
-    font-size: 1.2rem;
-    text-align: center;
-    margin-bottom: 4px;
-  }
-  .sub {
-    text-align: center;
-    color: var(--sub);
-    font-size: 0.8rem;
-    margin-bottom: 24px;
-  }
+  #app { width: 100%; max-width: 480px; padding: 20px; padding-bottom: 60px; }
+  h1 { font-size: 1.2rem; text-align: center; margin-bottom: 4px; }
+  .sub { text-align: center; color: var(--sub); font-size: 0.8rem; margin-bottom: 20px; }
   .screen { display: none; }
   .screen.active { display: block; }
-  .option-group {
-    margin-bottom: 24px;
-  }
-  .option-label {
-    font-size: 0.95rem;
-    color: var(--label-fg);
-    margin-bottom: 8px;
-  }
-  .option-btns {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
+  .settings-panel { display: none; }
+  .settings-panel.active { display: block; }
+  .option-group { margin-bottom: 22px; }
+  .option-label { font-size: 0.95rem; color: var(--label-fg); margin-bottom: 8px; }
+  .option-desc { font-size: 0.78rem; color: var(--sub); margin: -4px 0 10px; line-height: 1.4; }
+  .option-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .opt-btn {
-    padding: 14px 8px;
-    border-radius: 10px;
-    border: 1px solid var(--card-border);
-    background: var(--card-bg);
-    color: var(--fg);
-    font-size: 0.95rem;
-    text-align: center;
+    padding: 14px 8px; border-radius: 10px; border: 1px solid var(--card-border);
+    background: var(--card-bg); color: var(--fg); font-size: 0.92rem; text-align: center; line-height: 1.3;
   }
-  .opt-btn.selected {
-    background: var(--card-selected-bg);
-    border-color: var(--card-selected-border);
-    color: #fff;
+  .opt-btn.selected { background: var(--card-selected-bg); border-color: var(--card-selected-border); color: #fff; }
+  .mode-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 22px; }
+  .mode-btn {
+    padding: 14px 10px; border-radius: 12px; border: 1px solid var(--card-border);
+    background: var(--card-bg); color: var(--fg); text-align: left;
   }
+  .mode-btn.selected { background: var(--card-selected-bg); border-color: var(--card-selected-border); color: #fff; }
+  .mode-btn .mtitle { font-size: 0.95rem; font-weight: 700; display: block; margin-bottom: 3px; }
+  .mode-btn .mdesc { font-size: 0.72rem; opacity: 0.85; display: block; line-height: 1.3; }
   input[type="number"] {
-    width: 100%;
-    padding: 14px;
-    font-size: 1.1rem;
-    border-radius: 10px;
-    border: 1px solid var(--card-border);
-    background: var(--card-bg);
-    color: var(--fg);
-    text-align: center;
+    width: 100%; padding: 14px; font-size: 1.1rem; border-radius: 10px; border: 1px solid var(--card-border);
+    background: var(--card-bg); color: var(--fg); text-align: center;
   }
   .big-btn {
-    width: 100%;
-    padding: 16px;
-    font-size: 1.05rem;
-    border-radius: 12px;
-    border: none;
-    background: #2f6fed;
-    color: white;
-    margin-top: 12px;
+    width: 100%; padding: 16px; font-size: 1.05rem; border-radius: 12px; border: none;
+    background: #2f6fed; color: white; margin-top: 12px;
   }
-  .big-btn.secondary {
-    background: var(--btn-secondary-bg);
-    color: var(--btn-secondary-fg);
-  }
-  #quiz-progress {
-    text-align: center;
-    color: var(--sub);
-    font-size: 0.85rem;
-    margin-bottom: 8px;
-  }
-  #quiz-problem {
-    text-align: center;
-    font-size: 2.4rem;
-    font-weight: 700;
-    margin: 28px 0;
-    letter-spacing: 1px;
-  }
+  .big-btn.secondary { background: var(--btn-secondary-bg); color: var(--btn-secondary-fg); }
+  #quiz-progress { text-align: center; color: var(--sub); font-size: 0.85rem; margin-bottom: 8px; }
+  #mode-hint { text-align: center; color: var(--sub); font-size: 0.75rem; margin-bottom: 10px; }
+  #quiz-problem { text-align: center; font-size: 2rem; font-weight: 700; margin: 24px 0; letter-spacing: 0.5px; }
   .vert-problem {
-    font-family: "SF Mono", Menlo, Consolas, monospace;
-    font-size: 2rem;
-    font-weight: 700;
-    line-height: 1.4;
-    text-align: right;
-    display: inline-block;
-    margin: 0 auto;
-    white-space: pre;
+    font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 2rem; font-weight: 700;
+    line-height: 1.4; text-align: right; display: inline-block; margin: 0 auto; white-space: pre;
   }
-  #quiz-answer {
-    font-size: 1.6rem;
-    padding: 18px;
+  .compare-block { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .compare-side {
+    width: 100%; padding: 14px; border-radius: 10px; background: var(--card-bg);
+    border: 1px solid var(--card-border); font-size: 1.3rem; font-weight: 700;
   }
-  #feedback {
-    text-align: center;
-    margin-top: 14px;
-    font-size: 1.1rem;
-    min-height: 1.6em;
+  .compare-side .side-label { display: block; font-size: 0.72rem; font-weight: 400; color: var(--sub); margin-bottom: 4px; }
+  .compare-vs { font-size: 0.85rem; color: var(--sub); }
+  .frac-inline { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; font-size: 1.15rem; }
+  .frac-inline .fnum, .frac-inline .fden { padding: 0 6px; }
+  .frac-inline .fnum { border-bottom: 2px solid currentColor; }
+  #growth-question { text-align: center; font-size: 0.95rem; color: var(--label-fg); margin-bottom: 14px; }
+  .answer-area { margin-top: 8px; }
+  .choice-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .choice-btn { padding: 20px 8px; border-radius: 12px; border: none; background: #2f6fed; color: #fff; font-size: 1rem; font-weight: 700; }
+  .sort-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .sort-btn {
+    position: relative; padding: 16px 8px; border-radius: 12px; border: 1px solid var(--card-border);
+    background: var(--card-bg); color: var(--fg); font-size: 1.1rem; font-weight: 700;
   }
+  .sort-btn.picked { background: var(--card-selected-bg); border-color: var(--card-selected-border); color: #fff; }
+  .sort-btn .pick-badge {
+    position: absolute; top: -8px; left: -8px; width: 22px; height: 22px; border-radius: 50%;
+    background: #ff9500; color: #fff; font-size: 0.75rem; display: flex; align-items: center; justify-content: center;
+  }
+  table.fill-table { border-collapse: collapse; width: 100%; margin: 0 auto 4px; font-size: 0.95rem; }
+  table.fill-table th, table.fill-table td {
+    border: 1px solid var(--card-border); padding: 8px 4px; text-align: center; min-width: 40px;
+  }
+  table.fill-table th { background: var(--card-bg); color: var(--label-fg); font-weight: 600; font-size: 0.82rem; }
+  table.fill-table td.blank-cell { background: var(--card-selected-bg); color: #fff; font-weight: 700; }
+  #feedback { text-align: center; margin-top: 14px; font-size: 1.05rem; min-height: 1.5em; }
   #feedback.correct { color: #4caf50; }
   #feedback.wrong { color: #f44336; }
-  .summary-line {
-    font-size: 1.05rem;
-    margin: 8px 0;
-  }
-  .wrong-list {
-    margin-top: 16px;
-    background: var(--card-bg);
-    border-radius: 10px;
-    padding: 12px 16px;
-  }
-  .wrong-item {
-    font-size: 0.9rem;
-    color: var(--wrong-item-fg);
-    padding: 6px 0;
-    border-bottom: 1px solid var(--wrong-item-border);
-  }
+  #info-line { text-align: center; color: var(--sub); font-size: 0.82rem; min-height: 1.2em; }
+  .summary-line { font-size: 1.05rem; margin: 8px 0; }
+  .wrong-list { margin-top: 16px; background: var(--card-bg); border-radius: 10px; padding: 12px 16px; }
+  .wrong-item { font-size: 0.86rem; color: var(--wrong-item-fg); padding: 6px 0; border-bottom: 1px solid var(--wrong-item-border); }
   .wrong-item:last-child { border-bottom: none; }
 </style>
 </head>
 <body>
 <button id="theme-toggle" aria-label="라이트/다크 전환">🌙</button>
 <div id="app">
-  <h1>사칙연산 암산 연습</h1>
-  <div class="sub">인적성 수리영역 대비 (SK하이닉스 외 공통)</div>
+  <h1>인적성 암산 연습</h1>
+  <div class="sub">자료해석 어림산 · 대소비교 훈련 (SK하이닉스 외 공통)</div>
 
   <!-- 설정 화면 -->
   <div id="screen-setup" class="screen active">
     <div class="option-group">
-      <div class="option-label">연산 종류</div>
-      <div class="option-btns" id="op-btns">
-        <button class="opt-btn" data-op="+">덧셈</button>
-        <button class="opt-btn" data-op="-">뺄셈</button>
-        <button class="opt-btn" data-op="*">곱셈</button>
-        <button class="opt-btn" data-op="/">나눗셈</button>
-        <button class="opt-btn selected" data-op="mix" style="grid-column: 1 / span 2;">전체 (랜덤 혼합)</button>
+      <div class="option-label">연습 종류</div>
+      <div class="mode-btns" id="mode-btns">
+        <button class="mode-btn selected" data-mode="basic">
+          <span class="mtitle">기초 암산</span>
+          <span class="mdesc">정확한 계산. 증가량 등 뺄셈 자체를 빠르게 하는 훈련</span>
+        </button>
+        <button class="mode-btn" data-mode="mulCompare">
+          <span class="mtitle">곱셈 대소비교</span>
+          <span class="mdesc">두 곱셈 결과 중 큰 쪽 고르기 (어림산)</span>
+        </button>
+        <button class="mode-btn" data-mode="divCompare">
+          <span class="mtitle">분수 비교·정렬</span>
+          <span class="mdesc">비율 두 개 비교 또는 네 개 크기 순 정렬</span>
+        </button>
+        <button class="mode-btn" data-mode="growthCompare">
+          <span class="mtitle">증가율·증가량 비교</span>
+          <span class="mdesc">두 변화 중 증가율/증가량이 더 큰 쪽 고르기</span>
+        </button>
+        <button class="mode-btn" data-mode="tableFill" style="grid-column: 1 / span 2;">
+          <span class="mtitle">표 빈칸 채우기</span>
+          <span class="mdesc">행·열 합계로 빈칸 역산하기</span>
+        </button>
       </div>
     </div>
 
-    <div class="option-group">
-      <div class="option-label">난이도</div>
-      <div class="option-btns" id="level-btns" style="grid-template-columns: 1fr;">
-        <button class="opt-btn selected" data-level="1">쉬움 (1~2자리)</button>
-        <button class="opt-btn" data-level="2">보통 (2~3자리)</button>
-        <button class="opt-btn" data-level="3">어려움 (3~4자리)</button>
+    <!-- 기초 암산 설정 -->
+    <div class="settings-panel active" id="settings-basic">
+      <div class="option-group">
+        <div class="option-label">연산 종류</div>
+        <div class="option-btns" id="op-btns">
+          <button class="opt-btn" data-op="+">덧셈</button>
+          <button class="opt-btn" data-op="-">뺄셈</button>
+          <button class="opt-btn" data-op="*">곱셈</button>
+          <button class="opt-btn" data-op="/">나눗셈</button>
+          <button class="opt-btn selected" data-op="mix" style="grid-column: 1 / span 2;">전체 (랜덤 혼합)</button>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option-label">난이도</div>
+        <div class="option-btns" id="level-btns" style="grid-template-columns: 1fr;">
+          <button class="opt-btn selected" data-level="1">쉬움 (1~2자리)</button>
+          <button class="opt-btn" data-level="2">보통 (2~3자리)</button>
+          <button class="opt-btn" data-level="3">어려움 (3~4자리)</button>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option-label">문제 표시 방식</div>
+        <div class="option-btns" id="format-btns">
+          <button class="opt-btn selected" data-format="horizontal">가로 (45 - 23)</button>
+          <button class="opt-btn" data-format="vertical">세로 (필기 방식)</button>
+        </div>
       </div>
     </div>
 
-    <div class="option-group">
-      <div class="option-label">문제 표시 방식</div>
-      <div class="option-btns" id="format-btns">
-        <button class="opt-btn selected" data-format="horizontal">가로 (45 - 23)</button>
-        <button class="opt-btn" data-format="vertical">세로 (필기 방식)</button>
+    <!-- 곱셈 대소비교 설정 -->
+    <div class="settings-panel" id="settings-mulCompare">
+      <div class="option-group">
+        <div class="option-label">난이도</div>
+        <div class="option-desc">예: 4자리 × 소수 두 쌍을 비교합니다. 정확한 곱을 구하지 말고 크기만 어림하세요.</div>
+        <div class="option-btns" id="mulc-level-btns" style="grid-template-columns: 1fr;">
+          <button class="opt-btn selected" data-level="1">쉬움 (3자리 × 소수1자리)</button>
+          <button class="opt-btn" data-level="2">보통 (4자리 × 소수1자리)</button>
+          <button class="opt-btn" data-level="3">어려움 (4자리 × 소수2자리)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 분수 비교·정렬 설정 -->
+    <div class="settings-panel" id="settings-divCompare">
+      <div class="option-group">
+        <div class="option-label">문제 유형</div>
+        <div class="option-btns" id="divc-type-btns">
+          <button class="opt-btn" data-divtype="pair">두 분수 비교</button>
+          <button class="opt-btn" data-divtype="sort">네 분수 정렬</button>
+          <button class="opt-btn selected" data-divtype="mix" style="grid-column: 1 / span 2;">혼합</button>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option-label">난이도</div>
+        <div class="option-btns" id="divc-level-btns" style="grid-template-columns: 1fr;">
+          <button class="opt-btn selected" data-level="1">쉬움 (두 자리 숫자)</button>
+          <button class="opt-btn" data-level="2">보통 (두~세 자리 숫자)</button>
+          <button class="opt-btn" data-level="3">어려움 (세 자리 숫자)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 증가율/증가량 비교 설정 -->
+    <div class="settings-panel" id="settings-growthCompare">
+      <div class="option-group">
+        <div class="option-label">비교 기준</div>
+        <div class="option-btns" id="growth-type-btns">
+          <button class="opt-btn" data-growthtype="rate">증가율만</button>
+          <button class="opt-btn" data-growthtype="amount">증가량만</button>
+          <button class="opt-btn selected" data-growthtype="mix" style="grid-column: 1 / span 2;">혼합</button>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option-label">난이도</div>
+        <div class="option-btns" id="growth-level-btns" style="grid-template-columns: 1fr;">
+          <button class="opt-btn selected" data-level="1">쉬움 (10~99)</button>
+          <button class="opt-btn" data-level="2">보통 (50~500)</button>
+          <button class="opt-btn" data-level="3">어려움 (100~9999)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 표 빈칸 채우기 설정 -->
+    <div class="settings-panel" id="settings-tableFill">
+      <div class="option-group">
+        <div class="option-label">표 크기</div>
+        <div class="option-btns" id="table-size-btns" style="grid-template-columns: 1fr;">
+          <button class="opt-btn selected" data-size="1">작음 (2×2 + 합계)</button>
+          <button class="opt-btn" data-size="2">보통 (3×3 + 합계)</button>
+          <button class="opt-btn" data-size="3">큼 (3×4 + 합계, 음수 포함)</button>
+        </div>
       </div>
     </div>
 
@@ -262,7 +272,7 @@
       <div class="option-label">문제 개수</div>
       <div class="option-btns" id="count-btns">
         <button class="opt-btn selected" data-count="10">10문제</button>
-        <button class="opt-btn" data-count="20">20문제</button>
+        <button class="opt-btn" data-count="18">18문제</button>
         <button class="opt-btn" data-count="30">30문제</button>
         <button class="opt-btn" data-count="50">50문제</button>
       </div>
@@ -274,16 +284,35 @@
   <!-- 퀴즈 화면 -->
   <div id="screen-quiz" class="screen">
     <div id="quiz-progress"></div>
+    <div id="mode-hint"></div>
     <div id="quiz-problem"></div>
-    <input type="number" inputmode="numeric" id="quiz-answer" placeholder="정답 입력" autocomplete="off">
-    <button class="big-btn" id="submit-btn">확인</button>
+
+    <div class="answer-area" id="answer-numeric">
+      <input type="number" inputmode="numeric" id="quiz-answer" placeholder="정답 입력" autocomplete="off">
+      <button class="big-btn" id="submit-btn">확인</button>
+    </div>
+
+    <div class="answer-area" id="answer-choice" style="display:none;">
+      <div class="choice-btns">
+        <button class="choice-btn" id="choice-left">왼쪽(A)이 크다</button>
+        <button class="choice-btn" id="choice-right">오른쪽(B)이 크다</button>
+      </div>
+    </div>
+
+    <div class="answer-area" id="answer-sort" style="display:none;">
+      <div class="sort-grid" id="sort-grid"></div>
+      <button class="big-btn secondary" id="sort-reset-btn">다시 선택</button>
+    </div>
+
     <div id="feedback"></div>
+    <div id="info-line"></div>
   </div>
 
   <!-- 결과 화면 -->
   <div id="screen-result" class="screen">
     <div class="summary-line" id="result-score"></div>
     <div class="summary-line" id="result-time"></div>
+    <div class="summary-line" id="result-grade"></div>
     <div id="result-wrong"></div>
     <button class="big-btn" id="retry-btn">다시 하기</button>
     <button class="big-btn secondary" id="home-btn">설정 화면으로</button>
@@ -291,69 +320,31 @@
 </div>
 
 <script>
-const DIFFICULTY = {
-  // mulSmall: 곱셈에서 항상 30 이하로 제한하는 쪽 (한 자리 수도 섞여서 두자리x한자리도 나옴)
-  1: { addSub: [1, 99], mulSmall: [1, 9], mulBig: [1, 9], divDivisor: [2, 9], divQuotient: [2, 20] },
-  2: { addSub: [10, 999], mulSmall: [2, 30], mulBig: [2, 99], divDivisor: [2, 20], divQuotient: [2, 50] },
-  3: { addSub: [100, 9999], mulSmall: [2, 30], mulBig: [10, 999], divDivisor: [2, 50], divQuotient: [5, 99] },
-};
+/* ---------- 공통 유틸 ---------- */
+function rand(lo, hi) { return Math.floor(Math.random() * (hi - lo + 1)) + lo; }
+function randFloat(lo, hi, decimals) {
+  const mul = Math.pow(10, decimals);
+  return rand(Math.round(lo * mul), Math.round(hi * mul)) / mul;
+}
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 let state = {
+  mode: 'basic',
   ops: ['mix'],
   level: 1,
-  count: 10,
   format: 'horizontal',
+  divType: 'mix',
+  growthType: 'mix',
+  tableSize: 1,
+  count: 10,
   current: 0,
   results: [],
-  currentAnswer: null,
-  currentText: '',
+  currentProblem: null,
   startTime: 0,
+  sortPicks: [],
 };
 
-function rand(lo, hi) {
-  return Math.floor(Math.random() * (hi - lo + 1)) + lo;
-}
-
-function pick(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-function makeProblem(opSymbol, level) {
-  const lv = DIFFICULTY[level];
-  if (opSymbol === '+') {
-    const a = rand(...lv.addSub), b = rand(...lv.addSub);
-    return { a, b, opSymbol: '+', answer: a + b };
-  }
-  if (opSymbol === '-') {
-    let a = rand(...lv.addSub), b = rand(...lv.addSub);
-    if (a < b) [a, b] = [b, a];
-    return { a, b, opSymbol: '-', answer: a - b };
-  }
-  if (opSymbol === '*') {
-    let a = rand(...lv.mulSmall), b = rand(...lv.mulBig);
-    if (Math.random() < 0.5) [a, b] = [b, a];
-    return { a, b, opSymbol: '×', answer: a * b };
-  }
-  // 나눗셈: 나누어떨어지도록 몫 기준 생성
-  const divisor = rand(...lv.divDivisor);
-  const quotient = rand(...lv.divQuotient);
-  const dividend = divisor * quotient;
-  return { a: dividend, b: divisor, opSymbol: '÷', answer: quotient };
-}
-
-function renderProblem(p, format) {
-  if (format === 'horizontal') {
-    return { isHtml: false, content: `${p.a} ${p.opSymbol} ${p.b}` };
-  }
-  const aStr = String(p.a), bStr = String(p.b);
-  const width = Math.max(aStr.length, bStr.length);
-  const line1 = '  ' + aStr.padStart(width, ' ');
-  const line2 = p.opSymbol + ' ' + bStr.padStart(width, ' ');
-  const rule = '-'.repeat(Math.max(line1.length, line2.length));
-  const text = `${line1}\n${line2}\n${rule}`;
-  return { isHtml: true, content: `<pre class="vert-problem">${text}</pre>` };
-}
-
+/* ---------- 테마 토글 ---------- */
 function updateThemeIcon() {
   const theme = document.documentElement.getAttribute('data-theme');
   document.getElementById('theme-toggle').textContent = theme === 'light' ? '☀️' : '🌙';
@@ -372,107 +363,430 @@ function show(screenId) {
   document.getElementById(screenId).classList.add('active');
 }
 
-// 설정 화면 버튼 토글
-document.getElementById('op-btns').addEventListener('click', (e) => {
-  const btn = e.target.closest('.opt-btn');
+/* ---------- 설정 화면: 모드 전환 ---------- */
+document.getElementById('mode-btns').addEventListener('click', (e) => {
+  const btn = e.target.closest('.mode-btn');
   if (!btn) return;
-  document.querySelectorAll('#op-btns .opt-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#mode-btns .mode-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
-});
-document.getElementById('level-btns').addEventListener('click', (e) => {
-  const btn = e.target.closest('.opt-btn');
-  if (!btn) return;
-  document.querySelectorAll('#level-btns .opt-btn').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-});
-document.getElementById('count-btns').addEventListener('click', (e) => {
-  const btn = e.target.closest('.opt-btn');
-  if (!btn) return;
-  document.querySelectorAll('#count-btns .opt-btn').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-});
-document.getElementById('format-btns').addEventListener('click', (e) => {
-  const btn = e.target.closest('.opt-btn');
-  if (!btn) return;
-  document.querySelectorAll('#format-btns .opt-btn').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
+  const mode = btn.dataset.mode;
+  document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('settings-' + mode).classList.add('active');
 });
 
+function wireToggleGroup(id, attr) {
+  document.getElementById(id).addEventListener('click', (e) => {
+    const btn = e.target.closest('.opt-btn');
+    if (!btn) return;
+    document.querySelectorAll(`#${id} .opt-btn`).forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  });
+}
+['op-btns', 'level-btns', 'format-btns', 'mulc-level-btns', 'divc-type-btns', 'divc-level-btns',
+ 'growth-type-btns', 'growth-level-btns', 'table-size-btns', 'count-btns'].forEach(id => wireToggleGroup(id));
+
+function selectedOf(id, attr) {
+  return document.querySelector(`#${id} .opt-btn.selected`).dataset[attr];
+}
+
+/* ---------- 기초 암산 ---------- */
+const DIFFICULTY = {
+  1: { addSub: [1, 99], mulSmall: [1, 9], mulBig: [1, 9], divDivisor: [2, 9], divQuotient: [2, 20] },
+  2: { addSub: [10, 999], mulSmall: [2, 30], mulBig: [2, 99], divDivisor: [2, 20], divQuotient: [2, 50] },
+  3: { addSub: [100, 9999], mulSmall: [2, 30], mulBig: [10, 999], divDivisor: [2, 50], divQuotient: [5, 99] },
+};
+
+function genBasic(ops, level, format) {
+  const opSymbol = pick(ops);
+  const lv = DIFFICULTY[level];
+  let a, b, opChar, answer;
+  if (opSymbol === '+') {
+    a = rand(...lv.addSub); b = rand(...lv.addSub); opChar = '+'; answer = a + b;
+  } else if (opSymbol === '-') {
+    a = rand(...lv.addSub); b = rand(...lv.addSub);
+    if (a < b) [a, b] = [b, a];
+    opChar = '-'; answer = a - b;
+  } else if (opSymbol === '*') {
+    a = rand(...lv.mulSmall); b = rand(...lv.mulBig);
+    if (Math.random() < 0.5) [a, b] = [b, a];
+    opChar = '×'; answer = a * b;
+  } else {
+    const divisor = rand(...lv.divDivisor);
+    const quotient = rand(...lv.divQuotient);
+    a = divisor * quotient; b = divisor; opChar = '÷'; answer = quotient;
+  }
+  let render;
+  if (format === 'horizontal') {
+    render = { isHtml: false, content: `${a} ${opChar} ${b} = ?` };
+  } else {
+    const aStr = String(a), bStr = String(b);
+    const width = Math.max(aStr.length, bStr.length);
+    const line1 = '  ' + aStr.padStart(width, ' ');
+    const line2 = opChar + ' ' + bStr.padStart(width, ' ');
+    const rule = '-'.repeat(Math.max(line1.length, line2.length));
+    render = { isHtml: true, content: `<pre class="vert-problem">${line1}\n${line2}\n${rule}</pre>` };
+  }
+  return {
+    answerType: 'numeric',
+    render,
+    correctAnswer: answer,
+    promptText: `${a} ${opChar} ${b}`,
+    hint: '',
+  };
+}
+
+/* ---------- 곱셈 대소비교 ---------- */
+const MULC_LEVELS = {
+  1: { intRange: [100, 999], decDigits: 1, decRange: [2.0, 9.9] },
+  2: { intRange: [1000, 9999], decDigits: 1, decRange: [10.0, 99.9] },
+  3: { intRange: [1000, 9999], decDigits: 2, decRange: [10.0, 99.99] },
+};
+function genMulCompare(level) {
+  const cfg = MULC_LEVELS[level];
+  function side() {
+    const intPart = rand(...cfg.intRange);
+    const decPart = randFloat(cfg.decRange[0], cfg.decRange[1], cfg.decDigits);
+    return { intPart, decPart, product: intPart * decPart };
+  }
+  let a = side(), b = side(), tries = 0;
+  while (Math.abs(a.product - b.product) / Math.max(a.product, b.product) < 0.02 && tries < 20) { b = side(); tries++; }
+  const correctChoice = a.product > b.product ? 'left' : 'right';
+  const diffPercent = Math.abs(a.product - b.product) / Math.min(a.product, b.product) * 100;
+  const leftText = `${a.intPart} × ${a.decPart}`;
+  const rightText = `${b.intPart} × ${b.decPart}`;
+  return {
+    answerType: 'choice',
+    render: {
+      isHtml: true,
+      content: `<div class="compare-block">
+        <div class="compare-side"><span class="side-label">A</span>${leftText}</div>
+        <div class="compare-vs">?</div>
+        <div class="compare-side"><span class="side-label">B</span>${rightText}</div>
+      </div>`,
+    },
+    correctChoice,
+    promptText: `A: ${leftText}  vs  B: ${rightText}`,
+    infoText: `A=${a.product.toFixed(1)}, B=${b.product.toFixed(1)} (차이 ${diffPercent.toFixed(1)}%)`,
+  };
+}
+
+/* ---------- 분수 비교·정렬 ---------- */
+const DIVC_LEVELS = { 1: [10, 99], 2: [10, 299], 3: [100, 999] };
+function randFraction(range) {
+  const num = rand(...range), den = rand(...range);
+  return { num, den, value: num / den };
+}
+function fracHtml(f) {
+  return `<span class="frac-inline"><span class="fnum">${f.num}</span><span class="fden">${f.den}</span></span>`;
+}
+function genDivComparePair(level) {
+  const range = DIVC_LEVELS[level];
+  let a = randFraction(range), b = randFraction(range), tries = 0;
+  while (Math.abs(a.value - b.value) / Math.max(a.value, b.value) < 0.02 && tries < 20) { b = randFraction(range); tries++; }
+  const correctChoice = a.value > b.value ? 'left' : 'right';
+  const diffPercent = Math.abs(a.value - b.value) / Math.min(a.value, b.value) * 100;
+  return {
+    answerType: 'choice',
+    render: {
+      isHtml: true,
+      content: `<div class="compare-block">
+        <div class="compare-side"><span class="side-label">A</span>${fracHtml(a)}</div>
+        <div class="compare-vs">?</div>
+        <div class="compare-side"><span class="side-label">B</span>${fracHtml(b)}</div>
+      </div>`,
+    },
+    correctChoice,
+    promptText: `A: ${a.num}/${a.den}  vs  B: ${b.num}/${b.den}`,
+    infoText: `A=${a.value.toFixed(3)}, B=${b.value.toFixed(3)} (차이 ${diffPercent.toFixed(1)}%)`,
+  };
+}
+function genDivCompareSort(level) {
+  const range = DIVC_LEVELS[level];
+  const fracs = [];
+  for (let i = 0; i < 4; i++) fracs.push(randFraction(range));
+  const order = fracs.map((f, i) => i).sort((i1, i2) => fracs[i2].value - fracs[i1].value);
+  return {
+    answerType: 'sort',
+    items: fracs,
+    render: { isHtml: false, content: '' },
+    correctOrder: order,
+    promptText: '네 분수를 큰 순서로 정렬: ' + fracs.map(f => `${f.num}/${f.den}`).join(', '),
+    infoText: '정답 순서(왼쪽이 가장 큼): ' + order.map(i => `${fracs[i].num}/${fracs[i].den}(${fracs[i].value.toFixed(3)})`).join(' > '),
+  };
+}
+function genDivCompare(divType, level) {
+  const useType = divType === 'mix' ? pick(['pair', 'sort']) : divType;
+  return useType === 'pair' ? genDivComparePair(level) : genDivCompareSort(level);
+}
+
+/* ---------- 증가율/증가량 비교 ---------- */
+const GROWTH_LEVELS = { 1: [10, 99], 2: [50, 500], 3: [100, 9999] };
+function genGrowthSide(range) {
+  const before = rand(...range);
+  let after = rand(...range);
+  if (after === before) after = before + rand(1, Math.max(1, Math.floor(range[1] * 0.2)));
+  const rate = (after - before) / before * 100;
+  const amount = after - before;
+  return { before, after, rate, amount };
+}
+function genGrowthCompare(growthType, level) {
+  const range = GROWTH_LEVELS[level];
+  const basis = growthType === 'mix' ? pick(['rate', 'amount']) : growthType;
+  let a = genGrowthSide(range), b = genGrowthSide(range), tries = 0;
+  function diff() { return basis === 'rate' ? Math.abs(a.rate - b.rate) : Math.abs(a.amount - b.amount); }
+  while (diff() < (basis === 'rate' ? 1 : 1) && tries < 20) { b = genGrowthSide(range); tries++; }
+  const aVal = basis === 'rate' ? a.rate : a.amount;
+  const bVal = basis === 'rate' ? b.rate : b.amount;
+  const correctChoice = aVal > bVal ? 'left' : 'right';
+  const basisLabel = basis === 'rate' ? '증가율(%)' : '증가량';
+  const leftText = `${a.before} → ${a.after}`;
+  const rightText = `${b.before} → ${b.after}`;
+  return {
+    answerType: 'choice',
+    growthQuestion: `${basisLabel}이 더 큰 쪽은?`,
+    render: {
+      isHtml: true,
+      content: `<div class="compare-block">
+        <div class="compare-side"><span class="side-label">A</span>${leftText}</div>
+        <div class="compare-vs">?</div>
+        <div class="compare-side"><span class="side-label">B</span>${rightText}</div>
+      </div>`,
+    },
+    correctChoice,
+    promptText: `[${basisLabel}] A: ${leftText}  vs  B: ${rightText}`,
+    infoText: `A ${basisLabel}=${aVal.toFixed(1)}${basis === 'rate' ? '%' : ''}, B ${basisLabel}=${bVal.toFixed(1)}${basis === 'rate' ? '%' : ''}`,
+  };
+}
+
+/* ---------- 표 빈칸 채우기 ---------- */
+const TABLE_SIZES = {
+  1: { rows: 2, cols: 2, valueRange: [1, 50], allowNegative: false },
+  2: { rows: 3, cols: 3, valueRange: [1, 200], allowNegative: false },
+  3: { rows: 3, cols: 4, valueRange: [-50, 200], allowNegative: true },
+};
+function genTableFill(sizeKey) {
+  const cfg = TABLE_SIZES[sizeKey];
+  const rows = cfg.rows, cols = cfg.cols;
+  const data = [];
+  for (let r = 0; r < rows; r++) {
+    const row = [];
+    for (let c = 0; c < cols; c++) row.push(rand(...cfg.valueRange));
+    data.push(row);
+  }
+  const rowSums = data.map(row => row.reduce((s, v) => s + v, 0));
+  const colSums = [];
+  for (let c = 0; c < cols; c++) colSums.push(data.reduce((s, row) => s + row[c], 0));
+  const grandTotal = rowSums.reduce((s, v) => s + v, 0);
+  const blankR = rand(0, rows - 1), blankC = rand(0, cols - 1);
+  const blankValue = data[blankR][blankC];
+
+  let html = '<table class="fill-table"><tr><th></th>';
+  for (let c = 0; c < cols; c++) html += `<th>${c + 1}기</th>`;
+  html += '<th>합</th></tr>';
+  const rowLabels = 'ABCDEF';
+  for (let r = 0; r < rows; r++) {
+    html += `<tr><th>${rowLabels[r]}</th>`;
+    for (let c = 0; c < cols; c++) {
+      if (r === blankR && c === blankC) html += '<td class="blank-cell">?</td>';
+      else html += `<td>${data[r][c]}</td>`;
+    }
+    html += `<td>${rowSums[r]}</td></tr>`;
+  }
+  html += '<tr><th>합</th>';
+  for (let c = 0; c < cols; c++) html += `<td>${colSums[c]}</td>`;
+  html += `<td>${grandTotal}</td></tr></table>`;
+
+  return {
+    answerType: 'numeric',
+    render: { isHtml: true, content: html },
+    correctAnswer: blankValue,
+    promptText: `표 (${rowLabels[blankR]}행, ${blankC + 1}기 열) 빈칸`,
+    infoText: '',
+  };
+}
+
+/* ---------- 채점 등급 (PDF 기준, 곱셈비교/분수비교만 적용) ---------- */
+const PENALTY_SECONDS = { divCompare: 15, tableFill: 10 };
+const GRADE_PER_Q = {
+  mulCompare: [6.67, 8.33, 10.0, 11.67, 13.33],
+  divCompare: [16, 18, 20, 22, 24],
+};
+const GRADE_LABELS = ['Superior', 'Excellent', 'good', 'Average', 'Acceptable'];
+function gradeLabel(mode, totalSeconds, count) {
+  const thresholds = GRADE_PER_Q[mode];
+  if (!thresholds) return null;
+  const perQ = totalSeconds / count;
+  for (let i = 0; i < thresholds.length; i++) if (perQ <= thresholds[i]) return GRADE_LABELS[i];
+  return 'Need Work';
+}
+
+/* ---------- 문제 생성 라우터 ---------- */
+function generateProblem() {
+  if (state.mode === 'basic') return genBasic(state.ops, state.level, state.format);
+  if (state.mode === 'mulCompare') return genMulCompare(state.level);
+  if (state.mode === 'divCompare') return genDivCompare(state.divType, state.level);
+  if (state.mode === 'growthCompare') return genGrowthCompare(state.growthType, state.level);
+  if (state.mode === 'tableFill') return genTableFill(state.tableSize);
+}
+
+const MODE_HINT = {
+  basic: '',
+  mulCompare: '정확히 계산하지 말고 크기만 어림하세요',
+  divCompare: '',
+  growthCompare: '',
+  tableFill: '행 또는 열의 합을 이용해 빈칸을 구하세요',
+};
+
+/* ---------- 시작하기 ---------- */
+const LEVEL_BTN_ID = {
+  basic: 'level-btns',
+  mulCompare: 'mulc-level-btns',
+  divCompare: 'divc-level-btns',
+  growthCompare: 'growth-level-btns',
+  tableFill: 'level-btns',
+};
 document.getElementById('start-btn').addEventListener('click', () => {
-  const opChoice = document.querySelector('#op-btns .opt-btn.selected').dataset.op;
+  state.mode = document.querySelector('#mode-btns .mode-btn.selected').dataset.mode;
+  const opChoice = selectedOf('op-btns', 'op');
   state.ops = opChoice === 'mix' ? ['+', '-', '*', '/'] : [opChoice];
-  state.level = Number(document.querySelector('#level-btns .opt-btn.selected').dataset.level);
+  state.level = Number(document.querySelector(`#${LEVEL_BTN_ID[state.mode]} .opt-btn.selected`).dataset.level);
+  state.format = selectedOf('format-btns', 'format');
+  state.divType = document.querySelector('#divc-type-btns .opt-btn.selected').dataset.divtype;
+  state.growthType = document.querySelector('#growth-type-btns .opt-btn.selected').dataset.growthtype;
+  state.tableSize = Number(document.querySelector('#table-size-btns .opt-btn.selected').dataset.size);
   state.count = Number(document.querySelector('#count-btns .opt-btn.selected').dataset.count);
-  state.format = document.querySelector('#format-btns .opt-btn.selected').dataset.format;
   state.current = 0;
   state.results = [];
   show('screen-quiz');
   nextProblem();
 });
 
+/* ---------- 문제 진행 ---------- */
 function nextProblem() {
   state.current += 1;
-  if (state.current > state.count) {
-    finishQuiz();
-    return;
-  }
-  const opSymbol = pick(state.ops);
-  const p = makeProblem(opSymbol, state.level);
-  state.currentText = `${p.a} ${p.opSymbol} ${p.b}`;
-  state.currentAnswer = p.answer;
+  if (state.current > state.count) { finishQuiz(); return; }
+  const p = generateProblem();
+  state.currentProblem = p;
+  state.sortPicks = [];
   state.startTime = performance.now();
+
   document.getElementById('quiz-progress').textContent = `${state.current} / ${state.count}`;
-  const rendered = renderProblem(p, state.format);
+  document.getElementById('mode-hint').textContent = MODE_HINT[state.mode] || '';
+
   const problemEl = document.getElementById('quiz-problem');
-  if (rendered.isHtml) {
-    problemEl.innerHTML = rendered.content;
+  if (p.answerType === 'sort') {
+    problemEl.innerHTML = `<div style="font-size:0.95rem;color:var(--label-fg);">네 분수를 큰 순서로 탭하세요</div>`;
+  } else if (p.growthQuestion) {
+    problemEl.innerHTML = `<div id="growth-question">${p.growthQuestion}</div>` + p.render.content;
+  } else if (p.render.isHtml) {
+    problemEl.innerHTML = p.render.content;
   } else {
-    problemEl.textContent = `${rendered.content} = ?`;
+    problemEl.textContent = p.render.content;
   }
+
+  document.getElementById('answer-numeric').style.display = p.answerType === 'numeric' ? 'block' : 'none';
+  document.getElementById('answer-choice').style.display = p.answerType === 'choice' ? 'block' : 'none';
+  document.getElementById('answer-sort').style.display = p.answerType === 'sort' ? 'block' : 'none';
+
+  if (p.answerType === 'numeric') {
+    const input = document.getElementById('quiz-answer');
+    input.value = '';
+    input.focus();
+  }
+  if (p.answerType === 'sort') renderSortGrid(p);
+
   document.getElementById('feedback').textContent = '';
   document.getElementById('feedback').className = '';
-  const input = document.getElementById('quiz-answer');
-  input.value = '';
-  input.focus();
+  document.getElementById('info-line').textContent = '';
 }
+
+function renderSortGrid(p) {
+  const grid = document.getElementById('sort-grid');
+  grid.innerHTML = '';
+  p.items.forEach((f, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'sort-btn';
+    btn.textContent = `${f.num}/${f.den}`;
+    btn.dataset.idx = idx;
+    btn.addEventListener('click', () => onSortPick(idx));
+    grid.appendChild(btn);
+  });
+}
+function onSortPick(idx) {
+  if (state.sortPicks.includes(idx)) return;
+  state.sortPicks.push(idx);
+  const btns = document.querySelectorAll('#sort-grid .sort-btn');
+  const btn = btns[idx];
+  btn.classList.add('picked');
+  const badge = document.createElement('span');
+  badge.className = 'pick-badge';
+  badge.textContent = state.sortPicks.length;
+  btn.appendChild(badge);
+  if (state.sortPicks.length === state.currentProblem.items.length) {
+    setTimeout(() => submitResult(arraysEqual(state.sortPicks, state.currentProblem.correctOrder), state.sortPicks.map(i => state.currentProblem.items[i].num + '/' + state.currentProblem.items[i].den).join(' > ')), 200);
+  }
+}
+document.getElementById('sort-reset-btn').addEventListener('click', () => {
+  state.sortPicks = [];
+  renderSortGrid(state.currentProblem);
+});
+function arraysEqual(a, b) { return a.length === b.length && a.every((v, i) => v === b[i]); }
+
+document.getElementById('choice-left').addEventListener('click', () => submitResult(state.currentProblem.correctChoice === 'left', '왼쪽(A)'));
+document.getElementById('choice-right').addEventListener('click', () => submitResult(state.currentProblem.correctChoice === 'right', '오른쪽(B)'));
 
 function submitAnswer() {
   const input = document.getElementById('quiz-answer');
   const raw = input.value.trim();
-  const elapsed = (performance.now() - state.startTime) / 1000;
   const userAnswer = raw === '' ? null : Number(raw);
-  const isCorrect = userAnswer === state.currentAnswer;
+  const isCorrect = userAnswer === state.currentProblem.correctAnswer;
+  submitResult(isCorrect, raw || '(무응답)');
+}
+document.getElementById('submit-btn').addEventListener('click', submitAnswer);
+document.getElementById('quiz-answer').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitAnswer(); });
+
+function submitResult(isCorrect, givenLabel) {
+  const p = state.currentProblem;
+  const elapsed = (performance.now() - state.startTime) / 1000;
+  let answerLabel;
+  if (p.answerType === 'numeric') answerLabel = String(p.correctAnswer);
+  else if (p.answerType === 'choice') answerLabel = p.correctChoice === 'left' ? '왼쪽(A)' : '오른쪽(B)';
+  else answerLabel = p.correctOrder.map(i => p.items[i].num + '/' + p.items[i].den).join(' > ');
+
   state.results.push({
-    text: state.currentText,
-    answer: state.currentAnswer,
-    given: raw,
+    promptText: p.promptText,
+    answerText: answerLabel,
+    givenText: givenLabel,
     elapsed,
     isCorrect,
   });
+
   const fb = document.getElementById('feedback');
-  if (isCorrect) {
-    fb.textContent = '정답!';
-    fb.className = 'correct';
-  } else {
-    fb.textContent = `오답 (정답: ${state.currentAnswer})`;
-    fb.className = 'wrong';
-  }
-  setTimeout(nextProblem, isCorrect ? 350 : 800);
+  fb.textContent = isCorrect ? '정답!' : `오답 (정답: ${answerLabel})`;
+  fb.className = isCorrect ? 'correct' : 'wrong';
+  document.getElementById('info-line').textContent = p.infoText || '';
+  setTimeout(nextProblem, isCorrect ? 500 : 1100);
 }
 
-document.getElementById('submit-btn').addEventListener('click', submitAnswer);
-document.getElementById('quiz-answer').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') submitAnswer();
-});
-
+/* ---------- 결과 ---------- */
 function finishQuiz() {
   const total = state.results.length;
   const correct = state.results.filter(r => r.isCorrect).length;
-  const avgTime = state.results.reduce((s, r) => s + r.elapsed, 0) / total;
+  const wrongCount = total - correct;
+  const rawSeconds = state.results.reduce((s, r) => s + r.elapsed, 0);
+  const penalty = (PENALTY_SECONDS[state.mode] || 0) * wrongCount;
+  const totalSeconds = rawSeconds + penalty;
+  const avgTime = rawSeconds / total;
+
   document.getElementById('result-score').textContent =
     `결과: ${correct} / ${total} 정답 (${Math.round(correct / total * 100)}%)`;
   document.getElementById('result-time').textContent =
-    `문제당 평균 소요 시간: ${avgTime.toFixed(1)}초`;
+    penalty > 0
+      ? `문제당 평균 ${avgTime.toFixed(1)}초 (오답 페널티 +${penalty}초 포함 총 ${totalSeconds.toFixed(0)}초)`
+      : `문제당 평균 소요 시간: ${avgTime.toFixed(1)}초`;
+
+  const grade = gradeLabel(state.mode, totalSeconds, total);
+  document.getElementById('result-grade').textContent = grade ? `등급: ${grade} (원본 비타민 자료 기준 환산)` : '';
 
   const wrong = state.results.filter(r => !r.isCorrect);
   const wrongBox = document.getElementById('result-wrong');
@@ -483,8 +797,7 @@ function finishQuiz() {
     wrong.forEach(r => {
       const item = document.createElement('div');
       item.className = 'wrong-item';
-      const given = r.given || '(무응답)';
-      item.textContent = `${r.text} = ${r.answer}  (입력: ${given}, ${r.elapsed.toFixed(1)}초)`;
+      item.textContent = `${r.promptText} → 정답: ${r.answerText} (입력: ${r.givenText}, ${r.elapsed.toFixed(1)}초)`;
       list.appendChild(item);
     });
     wrongBox.appendChild(list);
@@ -498,9 +811,7 @@ document.getElementById('retry-btn').addEventListener('click', () => {
   show('screen-quiz');
   nextProblem();
 });
-document.getElementById('home-btn').addEventListener('click', () => {
-  show('screen-setup');
-});
+document.getElementById('home-btn').addEventListener('click', () => show('screen-setup'));
 </script>
 </body>
 </html>
