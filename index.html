@@ -494,6 +494,14 @@ const DIFFICULTY = {
   // 어려움: 726×52처럼 3자리×2자리(30 초과)도 실전에서 연습하는 조합이라 mulSmall을 2자리 전체로 넓힘.
   3: { addSub: [100, 9999], mulSmall: [2, 99], mulBig: [10, 999], divDivisor: [2, 50], divQuotient: [5, 99] },
 };
+// 덧셈은 4자리까지 가면 어차피 천/백/십/일 자리로 나눠서 덩어리로 계산하게 되니(따로 훈련할 필요 없음),
+// 한자리~세자리 조합(3자리는 2자리와 짝지을 때만)으로만 낸다.
+const ADD_DIGIT_RANGES = { 1: [1, 9], 2: [10, 99], 3: [100, 999] };
+const ADD_DIGIT_COMBOS = [[1, 1], [1, 2], [2, 1], [2, 2], [2, 3], [3, 2]];
+function genAddPair() {
+  const [da, db] = pick(ADD_DIGIT_COMBOS);
+  return [rand(...ADD_DIGIT_RANGES[da]), rand(...ADD_DIGIT_RANGES[db])];
+}
 // 두 자리 곱셈은 "50+2"처럼 십의 자리+나머지로 쪼개 계산하는 게 실전 특급계산법이다.
 function multiplyHint(a, b) {
   const small = Math.min(a, b), big = Math.max(a, b);
@@ -509,7 +517,7 @@ function genBasic(ops, level, format) {
   const lv = DIFFICULTY[level];
   let a, b, opChar, answer;
   if (opSymbol === '+') {
-    a = rand(...lv.addSub); b = rand(...lv.addSub); opChar = '+'; answer = a + b;
+    [a, b] = genAddPair(); opChar = '+'; answer = a + b;
   } else if (opSymbol === '-') {
     a = rand(...lv.addSub); b = rand(...lv.addSub);
     if (a < b) [a, b] = [b, a];
