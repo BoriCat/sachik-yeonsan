@@ -802,8 +802,10 @@ function genIndexCompare(level) {
   function ratio() { return Math.max(a.value, b.value) / Math.min(a.value, b.value); }
   while (!(ratio() >= 1.01 && ratio() <= 1.15) && tries < 40) { b = randSidedFraction(range, kind); tries++; }
   const correctChoice = a.value > b.value ? 'left' : 'right';
-  const leftText = `${a.den} → ${a.num}`;
-  const rightText = `${b.den} → ${b.num}`;
+  // "95 → 40"처럼만 쓰면 증가율 모드의 "이전값 → 나중값" 화살표와 똑같아 보여 헷갈린다.
+  // 어느 게 기준값이고 어느 게 비교값인지 반드시 글자로 밝힌다.
+  const leftText = `기준 ${a.den}<br>비교 ${a.num}`;
+  const rightText = `기준 ${b.den}<br>비교 ${b.num}`;
   const aIndex = (a.value * 100).toFixed(1), bIndex = (b.value * 100).toFixed(1);
   return {
     answerType: 'choice',
@@ -817,7 +819,7 @@ function genIndexCompare(level) {
       </div>`,
     },
     correctChoice,
-    promptText: `A: ${leftText} (지수환산)  vs  B: ${rightText}`,
+    promptText: `A: 기준${a.den}/비교${a.num}  vs  B: 기준${b.den}/비교${b.num}`,
     infoText: `A 지수=${aIndex}, B 지수=${bIndex}`,
   };
 }
