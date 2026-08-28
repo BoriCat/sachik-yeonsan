@@ -533,10 +533,21 @@ function genDivComparePair(level) {
     infoText: `A=${a.value.toFixed(3)}, B=${b.value.toFixed(3)} (차이 ${diffPercent.toFixed(1)}%)`,
   };
 }
+// 분자·분모를 독립으로 뽑거나 "분모→값→분자" 순으로 역산해도, num = den×value 구조상
+// 분자가 클수록 값도 커지는 상관관계가 수학적으로 남는다(실측: 분자 크기순 눈대중이 우연(4.2%)의
+// 4~5배인 17~24%로 완전정답). 그래서 4개 분수의 분자 크기 자체를 서로 비슷하게(공통 기준 근처)
+// 맞추고, 분모를 값에 맞게 역산해서 "분자만 봐서는 순서를 알 수 없게" 만든다.
 function genDivCompareSort(level) {
   const range = DIVC_LEVELS[level];
+  // 분자는 공통 기준(baseNum) 근처로 다 비슷하게 맞추고, 분모만 독립적으로 뽑는다.
+  // 그러면 값(num/den)의 차이가 사실상 분모 차이에서만 나오므로, 분자 크기는 순위에 대한 정보를 주지 못한다.
+  const baseNum = rand(...range);
   const fracs = [];
-  for (let i = 0; i < 4; i++) fracs.push(randFraction(range));
+  for (let i = 0; i < 4; i++) {
+    const num = Math.max(1, Math.round(baseNum * (0.85 + Math.random() * 0.3)));
+    const den = rand(...range);
+    fracs.push({ num, den, value: num / den });
+  }
   const order = fracs.map((f, i) => i).sort((i1, i2) => fracs[i2].value - fracs[i1].value);
   return {
     answerType: 'sort',
@@ -573,17 +584,25 @@ function genGrowthCompare(growthType, level) {
   const basis = growthType === 'mix' ? pick(['rate', 'amount']) : growthType;
   // 증가/감소를 섞으면 부호만 보고도 답이 나오므로(훈련 의미 없음), 한 문제 안에서는 방향을 통일한다.
   const direction = pick(['up', 'down']);
+  // 증가율 기준일 때 "증가량(뺄셈)만 보고 고른다"는 눈대중이 10,000회 중 61.9%나 맞아버렸다
+  // (밑변이 비슷하면 증가량이 큰 쪽이 증가율도 큰 경우가 많음). 그래서 그 눈대중이 맞는 경우와
+  // 틀리는 경우가 정확히 절반씩 나오도록 강제한다 (곱셈 비교에 적용한 것과 같은 방식).
+  const wantAmountShortcutCorrect = Math.random() < 0.5;
   let a = genGrowthSide(range, direction), b = genGrowthSide(range, direction), tries = 0;
   function magnitude(x) { return Math.abs(basis === 'rate' ? x.rate : x.amount); }
-  // 분수 비교 실측(1.01~1.14배)에 맞춰 증가율/증가량도 비슷하게 좁은 범위로 유지한다.
-  // 너무 근소하지도(1.05배 미만) 너무 압도적이지도(1.6배 초과) 않게.
   function isGoodPair() {
     const av = magnitude(a), bv = magnitude(b);
     if (av === 0 || bv === 0) return false;
     const ratio = Math.max(av, bv) / Math.min(av, bv);
-    return ratio >= 1.05 && ratio <= 1.6;
+    if (!(ratio >= 1.05 && ratio <= 1.6)) return false;
+    if (basis === 'rate') {
+      const amountShortcutIsA = Math.abs(a.amount) > Math.abs(b.amount);
+      const rateActualIsA = Math.abs(a.rate) > Math.abs(b.rate);
+      if ((amountShortcutIsA === rateActualIsA) !== wantAmountShortcutCorrect) return false;
+    }
+    return true;
   }
-  while (!isGoodPair() && tries < 40) { b = genGrowthSide(range, direction); tries++; }
+  while (!isGoodPair() && tries < 80) { b = genGrowthSide(range, direction); tries++; }
   const aVal = magnitude(a), bVal = magnitude(b);
   const correctChoice = aVal > bVal ? 'left' : 'right';
   const basisLabel = direction === 'up'
