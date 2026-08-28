@@ -624,6 +624,21 @@ function genDivCompare(divType, level) {
   return useType === 'pair' ? genDivComparePair(level) : genDivCompareSort(level);
 }
 
+/* ---------- 실전 느낌을 위한 항목명·단위 (숫자만 나오면 너무 삭막해서, 실제 자료해석 표에 흔한 표현을 붙인다) ---------- */
+const CATEGORY_POOL = ['가전', '반도체', '디스플레이', '이차전지', '자동차부품', '바이오', '화학', '철강', '조선', '통신', '식품', '섬유'];
+const QUANTITY_ITEM_POOL = [
+  { name: '매출액', unit: '억원' }, { name: '생산량', unit: '만 대' },
+  { name: '수출액', unit: '백만 달러' }, { name: '이용자 수', unit: '만 명' },
+  { name: '방문객 수', unit: '만 명' }, { name: '투자액', unit: '억원' },
+];
+const PERCENT_ITEM_POOL = ['시장 점유율', '가입률', '이용률', '찬성 비율', '불량률', '수출 비중'];
+function pickTwoCategories() {
+  const a = pick(CATEGORY_POOL);
+  let b = pick(CATEGORY_POOL), tries = 0;
+  while (b === a && tries < 10) { b = pick(CATEGORY_POOL); tries++; }
+  return [a, b];
+}
+
 /* ---------- 증가율/증가량 비교 ---------- */
 const GROWTH_LEVELS = { 1: [10, 99], 2: [50, 500], 3: [100, 9999] };
 function genGrowthSide(range, direction) {
@@ -669,8 +684,10 @@ function genGrowthCompare(growthType, level) {
   const basisLabel = direction === 'up'
     ? (basis === 'rate' ? '증가율(%)' : '증가량')
     : (basis === 'rate' ? '감소율(%)' : '감소량');
-  const leftText = `${a.before} → ${a.after}`;
-  const rightText = `${b.before} → ${b.after}`;
+  const item = pick(QUANTITY_ITEM_POOL);
+  const [catA, catB] = pickTwoCategories();
+  const leftText = `${catA} ${item.name}(${item.unit})<br>${a.before} → ${a.after}`;
+  const rightText = `${catB} ${item.name}(${item.unit})<br>${b.before} → ${b.after}`;
   return {
     answerType: 'choice',
     growthQuestion: `${basisLabel}이 더 큰 쪽은?`,
@@ -683,7 +700,7 @@ function genGrowthCompare(growthType, level) {
       </div>`,
     },
     correctChoice,
-    promptText: `[${basisLabel}] A: ${leftText}  vs  B: ${rightText}`,
+    promptText: `[${basisLabel}] A(${catA} ${item.name}): ${a.before} → ${a.after}  vs  B(${catB} ${item.name}): ${b.before} → ${b.after}`,
     infoText: `A ${basisLabel}=${aVal.toFixed(1)}${basis === 'rate' ? '%' : ''}, B ${basisLabel}=${bVal.toFixed(1)}${basis === 'rate' ? '%' : ''}`,
   };
 }
@@ -773,8 +790,10 @@ function genPPCompare(ppType, level) {
   const basisLabel = direction === 'up'
     ? (basis === 'pp' ? '%p 증가' : '% 증가율')
     : (basis === 'pp' ? '%p 감소' : '% 감소율');
-  const leftText = `${a.before}% → ${a.after}%`;
-  const rightText = `${b.before}% → ${b.after}%`;
+  const item = pick(PERCENT_ITEM_POOL);
+  const [catA, catB] = pickTwoCategories();
+  const leftText = `${catA} ${item}<br>${a.before}% → ${a.after}%`;
+  const rightText = `${catB} ${item}<br>${b.before}% → ${b.after}%`;
   return {
     answerType: 'choice',
     growthQuestion: `${basisLabel}이 더 큰 쪽은?`,
@@ -787,7 +806,7 @@ function genPPCompare(ppType, level) {
       </div>`,
     },
     correctChoice,
-    promptText: `[${basisLabel}] A: ${leftText}  vs  B: ${rightText}`,
+    promptText: `[${basisLabel}] A(${catA} ${item}): ${a.before}% → ${a.after}%  vs  B(${catB} ${item}): ${b.before}% → ${b.after}%`,
     infoText: `A ${basisLabel}=${aVal.toFixed(1)}${basis === 'pp' ? '%p' : '%'}, B ${basisLabel}=${bVal.toFixed(1)}${basis === 'pp' ? '%p' : '%'}`,
   };
 }
@@ -803,9 +822,11 @@ function genIndexCompare(level) {
   while (!(ratio() >= 1.01 && ratio() <= 1.15) && tries < 40) { b = randSidedFraction(range, kind); tries++; }
   const correctChoice = a.value > b.value ? 'left' : 'right';
   // "95 → 40"처럼만 쓰면 증가율 모드의 "이전값 → 나중값" 화살표와 똑같아 보여 헷갈린다.
-  // 어느 게 기준값이고 어느 게 비교값인지 반드시 글자로 밝힌다.
-  const leftText = `기준 ${a.den}<br>비교 ${a.num}`;
-  const rightText = `기준 ${b.den}<br>비교 ${b.num}`;
+  // 어느 게 기준값이고 어느 게 비교값인지 반드시 글자로 밝히고, 실제 자료해석처럼 항목명도 붙인다.
+  const item = pick(QUANTITY_ITEM_POOL);
+  const [catA, catB] = pickTwoCategories();
+  const leftText = `${catA} ${item.name}(${item.unit})<br>기준 ${a.den} · 비교 ${a.num}`;
+  const rightText = `${catB} ${item.name}(${item.unit})<br>기준 ${b.den} · 비교 ${b.num}`;
   const aIndex = (a.value * 100).toFixed(1), bIndex = (b.value * 100).toFixed(1);
   return {
     answerType: 'choice',
@@ -819,7 +840,7 @@ function genIndexCompare(level) {
       </div>`,
     },
     correctChoice,
-    promptText: `A: 기준${a.den}/비교${a.num}  vs  B: 기준${b.den}/비교${b.num}`,
+    promptText: `A(${catA} ${item.name}): 기준${a.den}/비교${a.num}  vs  B(${catB} ${item.name}): 기준${b.den}/비교${b.num}`,
     infoText: `A 지수=${aIndex}, B 지수=${bIndex}`,
   };
 }
