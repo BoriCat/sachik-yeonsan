@@ -100,13 +100,13 @@
     font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 2rem; font-weight: 700;
     line-height: 1.4; text-align: right; display: inline-block; margin: 0 auto; white-space: pre;
   }
-  .compare-block { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .compare-block { display: flex; flex-direction: row; gap: 8px; align-items: center; justify-content: center; }
   .compare-side {
-    width: 100%; padding: 14px; border-radius: 10px; background: var(--card-bg);
-    border: 1px solid var(--card-border); font-size: 1.3rem; font-weight: 700;
+    flex: 1; min-width: 0; padding: 12px 6px; border-radius: 10px; background: var(--card-bg);
+    border: 1px solid var(--card-border); font-size: 1.05rem; font-weight: 700; word-break: keep-all;
   }
   .compare-side .side-label { display: block; font-size: 0.72rem; font-weight: 400; color: var(--sub); margin-bottom: 4px; }
-  .compare-vs { font-size: 0.85rem; color: var(--sub); }
+  .compare-vs { font-size: 0.85rem; color: var(--sub); flex-shrink: 0; }
   .frac-inline { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; font-size: 1.15rem; }
   .frac-inline .fnum, .frac-inline .fden { padding: 0 6px; }
   .frac-inline .fnum { border-bottom: 2px solid currentColor; }
@@ -732,8 +732,8 @@ document.getElementById('sort-reset-btn').addEventListener('click', () => {
 });
 function arraysEqual(a, b) { return a.length === b.length && a.every((v, i) => v === b[i]); }
 
-document.getElementById('choice-left').addEventListener('click', () => submitResult(state.currentProblem.correctChoice === 'left', '왼쪽(A)'));
-document.getElementById('choice-right').addEventListener('click', () => submitResult(state.currentProblem.correctChoice === 'right', '오른쪽(B)'));
+document.getElementById('choice-left').addEventListener('click', () => submitResult(state.currentProblem.correctChoice === 'left', '위(A)'));
+document.getElementById('choice-right').addEventListener('click', () => submitResult(state.currentProblem.correctChoice === 'right', '아래(B)'));
 
 function submitAnswer() {
   const input = document.getElementById('quiz-answer');
