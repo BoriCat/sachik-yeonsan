@@ -182,9 +182,13 @@
           <span class="mtitle">지수 비교</span>
           <span class="mdesc">기준연도=100 지수로 환산해 크기 비교</span>
         </button>
-        <button class="mode-btn" data-mode="avgCompare" style="grid-column: 1 / span 2;">
+        <button class="mode-btn" data-mode="avgCompare">
           <span class="mtitle">가중평균 어림산</span>
           <span class="mdesc">인원수가 다른 두 그룹의 전체 평균 계산</span>
+        </button>
+        <button class="mode-btn" data-mode="shareCompare" style="grid-column: 1 / span 2;">
+          <span class="mtitle">비중(구성비) 역산</span>
+          <span class="mdesc">부분값+비중(%)으로 전체 구하기, 다른 항목 비중 구하기</span>
         </button>
       </div>
     </div>
@@ -330,6 +334,27 @@
       </div>
     </div>
 
+    <!-- 비중 역산 설정 -->
+    <div class="settings-panel" id="settings-shareCompare">
+      <div class="option-group">
+        <div class="option-label">문제 유형</div>
+        <div class="option-desc">전체 구하기: 부분값+비중(%) → 전체. 타 비중 구하기: 전체를 역산한 뒤 다른 항목의 비중(%)까지 구합니다.</div>
+        <div class="option-btns" id="share-type-btns">
+          <button class="opt-btn" data-sharetype="total">전체 구하기</button>
+          <button class="opt-btn" data-sharetype="other">타 비중 구하기</button>
+          <button class="opt-btn selected" data-sharetype="mix" style="grid-column: 1 / span 2;">혼합</button>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option-label">난이도</div>
+        <div class="option-btns" id="share-level-btns" style="grid-template-columns: 1fr;">
+          <button class="opt-btn selected" data-level="1">쉬움 (정수 % 위주)</button>
+          <button class="opt-btn" data-level="2">보통 (정수~소수1자리 %)</button>
+          <button class="opt-btn" data-level="3">어려움 (소수1자리 %, 큰 자릿수)</button>
+        </div>
+      </div>
+    </div>
+
     <div class="option-group">
       <div class="option-label">문제 개수</div>
       <div class="option-btns" id="count-btns">
@@ -350,7 +375,7 @@
     <div id="quiz-problem"></div>
 
     <div class="answer-area" id="answer-numeric">
-      <input type="number" inputmode="numeric" id="quiz-answer" placeholder="정답 입력" autocomplete="off">
+      <input type="number" inputmode="decimal" step="any" id="quiz-answer" placeholder="정답 입력" autocomplete="off">
       <button class="big-btn" id="submit-btn">확인</button>
     </div>
 
@@ -406,6 +431,7 @@ let state = {
   growthType: 'mix',
   tableSize: 1,
   ppType: 'mix',
+  shareType: 'mix',
   count: 10,
   current: 0,
   results: [],
@@ -454,7 +480,8 @@ function wireToggleGroup(id, attr) {
 }
 ['op-btns', 'level-btns', 'format-btns', 'mulc-level-btns', 'divc-type-btns', 'divc-level-btns',
  'growth-type-btns', 'growth-level-btns', 'table-size-btns', 'count-btns',
- 'pp-type-btns', 'pp-level-btns', 'index-level-btns', 'avg-level-btns'].forEach(id => wireToggleGroup(id));
+ 'pp-type-btns', 'pp-level-btns', 'index-level-btns', 'avg-level-btns',
+ 'share-type-btns', 'share-level-btns'].forEach(id => wireToggleGroup(id));
 
 function selectedOf(id, attr) {
   return document.querySelector(`#${id} .opt-btn.selected`).dataset[attr];
@@ -909,6 +936,75 @@ function genAvgCompare(level) {
   };
 }
 
+/* ---------- 비중(구성비) 역산 ---------- */
+// 전체 = 부분×100÷비중. 답이 항상 깔끔한 정수로 딱 떨어지게 만들려고, 전체를 항상 1000의 배수로
+// 두고 비중(%)이 정수거나 소수1자리여도 부분값이 반드시 정수가 되도록 역산해서 구성한다.
+const SHARE_LEVELS = {
+  1: { totalBaseRange: [2, 50], shareRange: [5, 60], shareDecimals: 0 },
+  2: { totalBaseRange: [5, 300], shareRange: [10, 600], shareDecimals: 1 },
+  3: { totalBaseRange: [10, 999], shareRange: [10, 900], shareDecimals: 1 },
+};
+function genSharePart(cfg, totalBase) {
+  if (cfg.shareDecimals === 0) {
+    const share = rand(...cfg.shareRange);
+    return { part: totalBase * 10 * share, shareText: `${share}%` };
+  }
+  const shareRaw = rand(...cfg.shareRange);
+  return { part: totalBase * shareRaw, shareText: `${(shareRaw / 10).toFixed(1)}%` };
+}
+function genShareTotal(level) {
+  const cfg = SHARE_LEVELS[level];
+  const totalBase = rand(...cfg.totalBaseRange);
+  const total = totalBase * 1000;
+  const { part, shareText } = genSharePart(cfg, totalBase);
+  const item = pick(QUANTITY_ITEM_POOL);
+  const cat = pick(CATEGORY_POOL);
+  return {
+    answerType: 'numeric',
+    answerDecimals: 0,
+    render: {
+      isHtml: true,
+      content: `<div style="font-size:1.15rem;line-height:1.9;font-weight:700;">
+        ${cat} ${item.name}: ${part}${item.unit}<br>
+        전체 중 ${cat}의 비중: ${shareText}
+        <div style="font-size:0.85rem;color:var(--sub);font-weight:400;margin-top:8px;">전체 ${item.name}은? (${item.unit})</div>
+      </div>`,
+    },
+    correctAnswer: total,
+    promptText: `${cat} ${item.name}=${part}${item.unit}, 비중=${shareText} → 전체?`,
+    infoText: '',
+  };
+}
+function genShareOther(level) {
+  const cfg = SHARE_LEVELS[level];
+  const totalBase = rand(...cfg.totalBaseRange);
+  const total = totalBase * 1000;
+  const { part: partA, shareText: shareAText } = genSharePart(cfg, totalBase);
+  const maxB = Math.max(2, total - partA);
+  const partB = rand(Math.max(1, Math.round(maxB * 0.05)), Math.max(2, Math.round(maxB * 0.85)));
+  const shareB = Math.round(partB / total * 1000) / 10;
+  const item = pick(QUANTITY_ITEM_POOL);
+  const [catA, catB] = pickTwoCategories();
+  const tableHtml = `<table class="fill-table">
+      <tr><th>항목</th><th>${item.name}(${item.unit})</th><th>전체 대비 비중</th></tr>
+      <tr><th>${catA}</th><td>${partA}</td><td>${shareAText}</td></tr>
+      <tr><th>${catB}</th><td>${partB}</td><td class="blank-cell">?</td></tr>
+    </table>
+    <div class="ox-statement">전체 대비 ${catB} ${item.name}의 비중은? (%, 소수 첫째자리까지)</div>`;
+  return {
+    answerType: 'numeric',
+    answerDecimals: 1,
+    render: { isHtml: true, content: tableHtml },
+    correctAnswer: shareB,
+    promptText: `${catA} ${item.name}=${partA}${item.unit}(비중${shareAText}), ${catB} ${item.name}=${partB}${item.unit} → ${catB} 비중?`,
+    infoText: `전체=${total}${item.unit}`,
+  };
+}
+function genShareCompare(shareType, level) {
+  const useType = shareType === 'mix' ? pick(['total', 'other']) : shareType;
+  return useType === 'total' ? genShareTotal(level) : genShareOther(level);
+}
+
 /* ---------- 채점 등급 (PDF 기준, 곱셈비교/분수비교만 적용) ---------- */
 const PENALTY_SECONDS = { divCompare: 15, tableFill: 10 };
 const GRADE_PER_Q = {
@@ -934,6 +1030,7 @@ function generateProblem() {
   if (state.mode === 'ppCompare') return genPPCompare(state.ppType, state.level);
   if (state.mode === 'indexCompare') return genIndexCompare(state.level);
   if (state.mode === 'avgCompare') return genAvgCompare(state.level);
+  if (state.mode === 'shareCompare') return genShareCompare(state.shareType, state.level);
 }
 
 const MODE_HINT = {
@@ -945,6 +1042,7 @@ const MODE_HINT = {
   ppCompare: '%p는 단순 뺄셈, %증가율은 (변화량÷이전값)×100',
   indexCompare: '비교값 ÷ 기준값 × 100',
   avgCompare: '(A인원×A평균 + B인원×B평균) ÷ 전체인원',
+  shareCompare: '전체 = 부분×100÷비중',
 };
 
 /* ---------- 시작하기 ---------- */
@@ -957,6 +1055,7 @@ const LEVEL_BTN_ID = {
   ppCompare: 'pp-level-btns',
   indexCompare: 'index-level-btns',
   avgCompare: 'avg-level-btns',
+  shareCompare: 'share-level-btns',
 };
 document.getElementById('start-btn').addEventListener('click', () => {
   state.mode = document.querySelector('#mode-btns .mode-btn.selected').dataset.mode;
@@ -968,6 +1067,7 @@ document.getElementById('start-btn').addEventListener('click', () => {
   state.growthType = document.querySelector('#growth-type-btns .opt-btn.selected').dataset.growthtype;
   state.tableSize = Number(document.querySelector('#table-size-btns .opt-btn.selected').dataset.size);
   state.ppType = document.querySelector('#pp-type-btns .opt-btn.selected').dataset.pptype;
+  state.shareType = document.querySelector('#share-type-btns .opt-btn.selected').dataset.sharetype;
   state.count = Number(document.querySelector('#count-btns .opt-btn.selected').dataset.count);
   state.current = 0;
   state.results = [];
@@ -1054,7 +1154,9 @@ function submitAnswer() {
   const input = document.getElementById('quiz-answer');
   const raw = input.value.trim();
   const userAnswer = raw === '' ? null : Number(raw);
-  const isCorrect = userAnswer === state.currentProblem.correctAnswer;
+  const decimals = state.currentProblem.answerDecimals || 0;
+  const mul = Math.pow(10, decimals);
+  const isCorrect = userAnswer !== null && Math.round(userAnswer * mul) === Math.round(state.currentProblem.correctAnswer * mul);
   submitResult(isCorrect, raw || '(무응답)');
 }
 document.getElementById('submit-btn').addEventListener('click', submitAnswer);
