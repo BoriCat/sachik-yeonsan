@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="color-scheme" content="light dark">
+<title>사칙연산 암산 연습</title>
+<script>
+  (function () {
+    var saved = localStorage.getItem('theme');
+    var theme = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+</script>
+<style>
+  :root {
+    --bg: #101418;
+    --fg: #eee;
+    --sub: #999;
+    --card-bg: #1c2228;
+    --card-border: #333;
+    --card-selected-bg: #2f6fed;
+    --card-selected-border: #2f6fed;
+    --label-fg: #bbb;
+    --btn-secondary-bg: #2a2f36;
+    --btn-secondary-fg: #ccc;
+    --wrong-item-fg: #ccc;
+    --wrong-item-border: #2a2f36;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f5f6f8;
+      --fg: #1c1c1e;
+      --sub: #6b6b6f;
+      --card-bg: #ffffff;
+      --card-border: #d7d9dd;
+      --card-selected-bg: #2f6fed;
+      --card-selected-border: #2f6fed;
+      --label-fg: #444;
+      --btn-secondary-bg: #e6e8eb;
+      --btn-secondary-fg: #333;
+      --wrong-item-fg: #333;
+      --wrong-item-border: #e2e4e8;
+    }
+  }
+  /* 앱 안 토글 버튼으로 고른 테마 — 폰 설정보다 우선 적용됨 */
+  html[data-theme="dark"] {
+    --bg: #101418;
+    --fg: #eee;
+    --sub: #999;
+    --card-bg: #1c2228;
+    --card-border: #333;
+    --card-selected-bg: #2f6fed;
+    --card-selected-border: #2f6fed;
+    --label-fg: #bbb;
+    --btn-secondary-bg: #2a2f36;
+    --btn-secondary-fg: #ccc;
+    --wrong-item-fg: #ccc;
+    --wrong-item-border: #2a2f36;
+  }
+  html[data-theme="light"] {
+    --bg: #f5f6f8;
+    --fg: #1c1c1e;
+    --sub: #6b6b6f;
+    --card-bg: #ffffff;
+    --card-border: #d7d9dd;
+    --card-selected-bg: #2f6fed;
+    --card-selected-border: #2f6fed;
+    --label-fg: #444;
+    --btn-secondary-bg: #e6e8eb;
+    --btn-secondary-fg: #333;
+    --wrong-item-fg: #333;
+    --wrong-item-border: #e2e4e8;
+  }
+  #theme-toggle {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--fg);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  #app {
+    width: 100%;
+    max-width: 480px;
+    padding: 20px;
+    padding-bottom: 60px;
+  }
+  h1 {
+    font-size: 1.2rem;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .sub {
+    text-align: center;
+    color: var(--sub);
+    font-size: 0.8rem;
+    margin-bottom: 24px;
+  }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .option-group {
+    margin-bottom: 24px;
+  }
+  .option-label {
+    font-size: 0.95rem;
+    color: var(--label-fg);
+    margin-bottom: 8px;
+  }
+  .option-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .opt-btn {
+    padding: 14px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--fg);
+    font-size: 0.95rem;
+    text-align: center;
+  }
+  .opt-btn.selected {
+    background: var(--card-selected-bg);
+    border-color: var(--card-selected-border);
+    color: #fff;
+  }
+  input[type="number"] {
+    width: 100%;
+    padding: 14px;
+    font-size: 1.1rem;
+    border-radius: 10px;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--fg);
+    text-align: center;
+  }
+  .big-btn {
+    width: 100%;
+    padding: 16px;
+    font-size: 1.05rem;
+    border-radius: 12px;
+    border: none;
+    background: #2f6fed;
+    color: white;
+    margin-top: 12px;
+  }
+  .big-btn.secondary {
+    background: var(--btn-secondary-bg);
+    color: var(--btn-secondary-fg);
+  }
+  #quiz-progress {
+    text-align: center;
+    color: var(--sub);
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+  }
+  #quiz-problem {
+    text-align: center;
+    font-size: 2.4rem;
+    font-weight: 700;
+    margin: 28px 0;
+    letter-spacing: 1px;
+  }
+  #quiz-answer {
+    font-size: 1.6rem;
+    padding: 18px;
+  }
+  #feedback {
+    text-align: center;
+    margin-top: 14px;
+    font-size: 1.1rem;
+    min-height: 1.6em;
+  }
+  #feedback.correct { color: #4caf50; }
+  #feedback.wrong { color: #f44336; }
+  .summary-line {
+    font-size: 1.05rem;
+    margin: 8px 0;
+  }
+  .wrong-list {
+    margin-top: 16px;
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 12px 16px;
+  }
+  .wrong-item {
+    font-size: 0.9rem;
+    color: var(--wrong-item-fg);
+    padding: 6px 0;
+    border-bottom: 1px solid var(--wrong-item-border);
+  }
+  .wrong-item:last-child { border-bottom: none; }
+</style>
+</head>
+<body>
+<button id="theme-toggle" aria-label="라이트/다크 전환">🌙</button>
+<div id="app">
+  <h1>사칙연산 암산 연습</h1>
+  <div class="sub">인적성 수리영역 대비 (SK하이닉스 외 공통)</div>
+
+  <!-- 설정 화면 -->
+  <div id="screen-setup" class="screen active">
+    <div class="option-group">
+      <div class="option-label">연산 종류</div>
+      <div class="option-btns" id="op-btns">
+        <button class="opt-btn" data-op="+">덧셈</button>
+        <button class="opt-btn" data-op="-">뺄셈</button>
+        <button class="opt-btn" data-op="*">곱셈</button>
+        <button class="opt-btn" data-op="/">나눗셈</button>
+        <button class="opt-btn selected" data-op="mix" style="grid-column: 1 / span 2;">전체 (랜덤 혼합)</button>
+      </div>
+    </div>
+
+    <div class="option-group">
+      <div class="option-label">난이도</div>
+      <div class="option-btns" id="level-btns" style="grid-template-columns: 1fr;">
+        <button class="opt-btn selected" data-level="1">쉬움 (1~2자리)</button>
+        <button class="opt-btn" data-level="2">보통 (2~3자리)</button>
+        <button class="opt-btn" data-level="3">어려움 (3~4자리)</button>
+      </div>
+    </div>
+
+    <div class="option-group">
+      <div class="option-label">문제 개수</div>
+      <div class="option-btns" id="count-btns">
+        <button class="opt-btn selected" data-count="10">10문제</button>
+        <button class="opt-btn" data-count="20">20문제</button>
+        <button class="opt-btn" data-count="30">30문제</button>
+        <button class="opt-btn" data-count="50">50문제</button>
+      </div>
+    </div>
+
+    <button class="big-btn" id="start-btn">시작하기</button>
+  </div>
+
+  <!-- 퀴즈 화면 -->
+  <div id="screen-quiz" class="screen">
+    <div id="quiz-progress"></div>
+    <div id="quiz-problem"></div>
+    <input type="number" inputmode="numeric" id="quiz-answer" placeholder="정답 입력" autocomplete="off">
+    <button class="big-btn" id="submit-btn">확인</button>
+    <div id="feedback"></div>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div id="screen-result" class="screen">
+    <div class="summary-line" id="result-score"></div>
+    <div class="summary-line" id="result-time"></div>
+    <div id="result-wrong"></div>
+    <button class="big-btn" id="retry-btn">다시 하기</button>
+    <button class="big-btn secondary" id="home-btn">설정 화면으로</button>
+  </div>
+</div>
+
+<script>
+const DIFFICULTY = {
+  1: { addSub: [1, 99], mul: [1, 9], divDivisor: [2, 9], divQuotient: [2, 20] },
+  2: { addSub: [10, 999], mul: [2, 99], divDivisor: [2, 20], divQuotient: [2, 50] },
+  3: { addSub: [100, 9999], mul: [10, 999], divDivisor: [2, 50], divQuotient: [5, 99] },
+};
+
+let state = {
+  ops: ['mix'],
+  level: 1,
+  count: 10,
+  current: 0,
+  results: [],
+  currentAnswer: null,
+  currentText: '',
+  startTime: 0,
+};
+
+function rand(lo, hi) {
+  return Math.floor(Math.random() * (hi - lo + 1)) + lo;
+}
+
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function makeProblem(opSymbol, level) {
+  const lv = DIFFICULTY[level];
+  if (opSymbol === '+') {
+    const a = rand(...lv.addSub), b = rand(...lv.addSub);
+    return { text: `${a} + ${b}`, answer: a + b };
+  }
+  if (opSymbol === '-') {
+    let a = rand(...lv.addSub), b = rand(...lv.addSub);
+    if (a < b) [a, b] = [b, a];
+    return { text: `${a} - ${b}`, answer: a - b };
+  }
+  if (opSymbol === '*') {
+    const a = rand(...lv.mul), b = rand(...lv.mul);
+    return { text: `${a} × ${b}`, answer: a * b };
+  }
+  // 나눗셈: 나누어떨어지도록 몫 기준 생성
+  const divisor = rand(...lv.divDivisor);
+  const quotient = rand(...lv.divQuotient);
+  const dividend = divisor * quotient;
+  return { text: `${dividend} ÷ ${divisor}`, answer: quotient };
+}
+
+function updateThemeIcon() {
+  const theme = document.documentElement.getAttribute('data-theme');
+  document.getElementById('theme-toggle').textContent = theme === 'light' ? '☀️' : '🌙';
+}
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  updateThemeIcon();
+});
+updateThemeIcon();
+
+function show(screenId) {
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+  document.getElementById(screenId).classList.add('active');
+}
+
+// 설정 화면 버튼 토글
+document.getElementById('op-btns').addEventListener('click', (e) => {
+  const btn = e.target.closest('.opt-btn');
+  if (!btn) return;
+  document.querySelectorAll('#op-btns .opt-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+});
+document.getElementById('level-btns').addEventListener('click', (e) => {
+  const btn = e.target.closest('.opt-btn');
+  if (!btn) return;
+  document.querySelectorAll('#level-btns .opt-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+});
+document.getElementById('count-btns').addEventListener('click', (e) => {
+  const btn = e.target.closest('.opt-btn');
+  if (!btn) return;
+  document.querySelectorAll('#count-btns .opt-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+});
+
+document.getElementById('start-btn').addEventListener('click', () => {
+  const opChoice = document.querySelector('#op-btns .opt-btn.selected').dataset.op;
+  state.ops = opChoice === 'mix' ? ['+', '-', '*', '/'] : [opChoice];
+  state.level = Number(document.querySelector('#level-btns .opt-btn.selected').dataset.level);
+  state.count = Number(document.querySelector('#count-btns .opt-btn.selected').dataset.count);
+  state.current = 0;
+  state.results = [];
+  show('screen-quiz');
+  nextProblem();
+});
+
+function nextProblem() {
+  state.current += 1;
+  if (state.current > state.count) {
+    finishQuiz();
+    return;
+  }
+  const opSymbol = pick(state.ops);
+  const p = makeProblem(opSymbol, state.level);
+  state.currentText = p.text;
+  state.currentAnswer = p.answer;
+  state.startTime = performance.now();
+  document.getElementById('quiz-progress').textContent = `${state.current} / ${state.count}`;
+  document.getElementById('quiz-problem').textContent = `${p.text} = ?`;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = '';
+  const input = document.getElementById('quiz-answer');
+  input.value = '';
+  input.focus();
+}
+
+function submitAnswer() {
+  const input = document.getElementById('quiz-answer');
+  const raw = input.value.trim();
+  const elapsed = (performance.now() - state.startTime) / 1000;
+  const userAnswer = raw === '' ? null : Number(raw);
+  const isCorrect = userAnswer === state.currentAnswer;
+  state.results.push({
+    text: state.currentText,
+    answer: state.currentAnswer,
+    given: raw,
+    elapsed,
+    isCorrect,
+  });
+  const fb = document.getElementById('feedback');
+  if (isCorrect) {
+    fb.textContent = '정답!';
+    fb.className = 'correct';
+  } else {
+    fb.textContent = `오답 (정답: ${state.currentAnswer})`;
+    fb.className = 'wrong';
+  }
+  setTimeout(nextProblem, isCorrect ? 350 : 800);
+}
+
+document.getElementById('submit-btn').addEventListener('click', submitAnswer);
+document.getElementById('quiz-answer').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') submitAnswer();
+});
+
+function finishQuiz() {
+  const total = state.results.length;
+  const correct = state.results.filter(r => r.isCorrect).length;
+  const avgTime = state.results.reduce((s, r) => s + r.elapsed, 0) / total;
+  document.getElementById('result-score').textContent =
+    `결과: ${correct} / ${total} 정답 (${Math.round(correct / total * 100)}%)`;
+  document.getElementById('result-time').textContent =
+    `문제당 평균 소요 시간: ${avgTime.toFixed(1)}초`;
+
+  const wrong = state.results.filter(r => !r.isCorrect);
+  const wrongBox = document.getElementById('result-wrong');
+  wrongBox.innerHTML = '';
+  if (wrong.length > 0) {
+    const list = document.createElement('div');
+    list.className = 'wrong-list';
+    wrong.forEach(r => {
+      const item = document.createElement('div');
+      item.className = 'wrong-item';
+      const given = r.given || '(무응답)';
+      item.textContent = `${r.text} = ${r.answer}  (입력: ${given}, ${r.elapsed.toFixed(1)}초)`;
+      list.appendChild(item);
+    });
+    wrongBox.appendChild(list);
+  }
+  show('screen-result');
+}
+
+document.getElementById('retry-btn').addEventListener('click', () => {
+  state.current = 0;
+  state.results = [];
+  show('screen-quiz');
+  nextProblem();
+});
+document.getElementById('home-btn').addEventListener('click', () => {
+  show('screen-setup');
+});
+</script>
+</body>
+</html>
