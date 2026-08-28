@@ -479,13 +479,25 @@ function randFraction(range) {
   const num = rand(...range), den = rand(...range);
   return { num, den, value: num / den };
 }
+// 진분수/가분수 어느 한쪽으로 확실히 고정한 분수를 만든다 (num<den 이면 항상 진분수, 반대면 항상 가분수).
+// "한쪽은 1보다 크고 한쪽은 작다"는 계산 없이 판단 가능한 경우를 원천적으로 막기 위함 (실측: 10문항 중 9문항이 같은 편).
+function randSidedFraction(range, side) {
+  let x = rand(...range), y = rand(...range);
+  if (x === y) y = x + 1 <= range[1] ? x + 1 : x - 1;
+  const lo = Math.min(x, y), hi = Math.max(x, y);
+  return side === 'proper' ? { num: lo, den: hi, value: lo / hi } : { num: hi, den: lo, value: hi / lo };
+}
 function fracHtml(f) {
   return `<span class="frac-inline"><span class="fnum">${f.num}</span><span class="fden">${f.den}</span></span>`;
 }
 function genDivComparePair(level) {
   const range = DIVC_LEVELS[level];
-  let a = randFraction(range), b = randFraction(range), tries = 0;
-  while (Math.abs(a.value - b.value) / Math.max(a.value, b.value) < 0.02 && tries < 20) { b = randFraction(range); tries++; }
+  // 실측(비타민 자료 10문항 정답값 환산): 9/10이 진분수끼리 비교, 값 차이는 1.01~1.14배에 몰려 있음.
+  const side = Math.random() < 0.9 ? 'proper' : 'improper';
+  const a = randSidedFraction(range, side);
+  let b = randSidedFraction(range, side), tries = 0;
+  function ratio() { return Math.max(a.value, b.value) / Math.min(a.value, b.value); }
+  while (!(ratio() >= 1.01 && ratio() <= 1.15) && tries < 40) { b = randSidedFraction(range, side); tries++; }
   const correctChoice = a.value > b.value ? 'left' : 'right';
   const diffPercent = Math.abs(a.value - b.value) / Math.min(a.value, b.value) * 100;
   return {
@@ -545,13 +557,13 @@ function genGrowthCompare(growthType, level) {
   const direction = pick(['up', 'down']);
   let a = genGrowthSide(range, direction), b = genGrowthSide(range, direction), tries = 0;
   function magnitude(x) { return Math.abs(basis === 'rate' ? x.rate : x.amount); }
-  // 한쪽이 계산 없이 봐도 압도적으로 크면(비율 3배 초과) 의미 없는 문제이므로,
-  // 너무 근소하지도(1.02배 미만) 너무 압도적이지도(3배 초과) 않은 범위로 맞춘다.
+  // 분수 비교 실측(1.01~1.14배)에 맞춰 증가율/증가량도 비슷하게 좁은 범위로 유지한다.
+  // 너무 근소하지도(1.05배 미만) 너무 압도적이지도(1.6배 초과) 않게.
   function isGoodPair() {
     const av = magnitude(a), bv = magnitude(b);
     if (av === 0 || bv === 0) return false;
     const ratio = Math.max(av, bv) / Math.min(av, bv);
-    return ratio >= 1.02 && ratio <= 3.0;
+    return ratio >= 1.05 && ratio <= 1.6;
   }
   while (!isGoodPair() && tries < 40) { b = genGrowthSide(range, direction); tries++; }
   const aVal = magnitude(a), bVal = magnitude(b);
