@@ -114,6 +114,9 @@
   .answer-area { margin-top: 8px; }
   .choice-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .choice-btn { padding: 20px 8px; border-radius: 12px; border: none; background: #2f6fed; color: #fff; font-size: 1rem; font-weight: 700; }
+  .choice-btn.ox-o { background: #2e9e4a; }
+  .choice-btn.ox-x { background: #d9483d; }
+  .ox-statement { text-align: left; font-size: 1rem; line-height: 1.6; margin-top: 16px; color: var(--fg); }
   .sort-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
   .sort-btn {
     position: relative; padding: 16px 8px; border-radius: 12px; border: 1px solid var(--card-border);
@@ -361,6 +364,13 @@
     <div class="answer-area" id="answer-sort" style="display:none;">
       <div class="sort-grid" id="sort-grid"></div>
       <button class="big-btn secondary" id="sort-reset-btn">다시 선택</button>
+    </div>
+
+    <div class="answer-area" id="answer-ox" style="display:none;">
+      <div class="choice-btns">
+        <button class="choice-btn ox-o" id="ox-o-btn">O (맞다)</button>
+        <button class="choice-btn ox-x" id="ox-x-btn">X (틀리다)</button>
+      </div>
     </div>
 
     <div id="feedback"></div>
@@ -638,6 +648,20 @@ function pickTwoCategories() {
   while (b === a && tries < 10) { b = pick(CATEGORY_POOL); tries++; }
   return [a, b];
 }
+// 실제 시험지처럼 표를 먼저 보여주고, 그 표에 대한 문장이 맞는지(O) 틀린지(X) 판단하게 한다.
+function renderOxTable(colHeaders, rows, statement) {
+  let html = '<table class="fill-table"><tr>';
+  colHeaders.forEach(h => { html += `<th>${h}</th>`; });
+  html += '</tr>';
+  rows.forEach(row => {
+    html += '<tr>';
+    row.forEach((cell, i) => { html += i === 0 ? `<th>${cell}</th>` : `<td>${cell}</td>`; });
+    html += '</tr>';
+  });
+  html += '</table>';
+  html += `<div class="ox-statement">${statement}</div>`;
+  return html;
+}
 
 /* ---------- 증가율/증가량 비교 ---------- */
 const GROWTH_LEVELS = { 1: [10, 99], 2: [50, 500], 3: [100, 9999] };
@@ -681,27 +705,29 @@ function genGrowthCompare(growthType, level) {
   while (!isGoodPair() && tries < 80) { b = genGrowthSide(range, direction); tries++; }
   const aVal = magnitude(a), bVal = magnitude(b);
   const correctChoice = aVal > bVal ? 'left' : 'right';
-  const basisLabel = direction === 'up'
-    ? (basis === 'rate' ? '증가율(%)' : '증가량')
-    : (basis === 'rate' ? '감소율(%)' : '감소량');
+  const basisNoun = direction === 'up' ? (basis === 'rate' ? '증가율' : '증가량') : (basis === 'rate' ? '감소율' : '감소량');
+  const isRateType = basis === 'rate';
+  const higherWord = isRateType ? '높다' : '크다', lowerWord = isRateType ? '낮다' : '작다';
   const item = pick(QUANTITY_ITEM_POOL);
   const [catA, catB] = pickTwoCategories();
-  const leftText = `${catA} ${item.name}(${item.unit})<br>${a.before} → ${a.after}`;
-  const rightText = `${catB} ${item.name}(${item.unit})<br>${b.before} → ${b.after}`;
+  const year1 = rand(2015, 2022), year2 = year1 + 1;
+  // 실제 시험지 형식(표 + 문장이 맞는지 O/X)으로 낸다. 문장의 주장(A가 크다/작다)은 매번 무작위로 정하고,
+  // 그 주장이 실제와 맞으면 O, 틀리면 X가 정답이 되어 결국 O/X가 절반씩 나온다.
+  const claimAHigher = Math.random() < 0.5;
+  const claimWord = claimAHigher ? higherWord : lowerWord;
+  const correctOx = (claimAHigher === (correctChoice === 'left')) ? 'O' : 'X';
+  const statement = `① ${year2}년 ${catA} ${item.name}의 전년 대비 ${basisNoun}은 ${catB} ${item.name}의 전년 대비 ${basisNoun}보다 ${claimWord}.`;
+  const tableHtml = renderOxTable(
+    [`${item.name}(${item.unit})`, `${year1}`, `${year2}`],
+    [[catA, a.before, a.after], [catB, b.before, b.after]],
+    statement
+  );
   return {
-    answerType: 'choice',
-    growthQuestion: `${basisLabel}이 더 큰 쪽은?`,
-    render: {
-      isHtml: true,
-      content: `<div class="compare-block">
-        <div class="compare-side"><span class="side-label">A</span>${leftText}</div>
-        <div class="compare-vs">?</div>
-        <div class="compare-side"><span class="side-label">B</span>${rightText}</div>
-      </div>`,
-    },
-    correctChoice,
-    promptText: `[${basisLabel}] A(${catA} ${item.name}): ${a.before} → ${a.after}  vs  B(${catB} ${item.name}): ${b.before} → ${b.after}`,
-    infoText: `A ${basisLabel}=${aVal.toFixed(1)}${basis === 'rate' ? '%' : ''}, B ${basisLabel}=${bVal.toFixed(1)}${basis === 'rate' ? '%' : ''}`,
+    answerType: 'ox',
+    render: { isHtml: true, content: tableHtml },
+    correctChoice: correctOx,
+    promptText: `${statement} [표: ${catA} ${a.before}→${a.after}, ${catB} ${b.before}→${b.after}]`,
+    infoText: `A ${basisNoun}=${aVal.toFixed(1)}${isRateType ? '%' : ''}, B ${basisNoun}=${bVal.toFixed(1)}${isRateType ? '%' : ''}`,
   };
 }
 
@@ -787,27 +813,27 @@ function genPPCompare(ppType, level) {
   while (!isGoodPair() && tries < 80) { b = genPPSide(range, direction); tries++; }
   const aVal = magnitude(a), bVal = magnitude(b);
   const correctChoice = aVal > bVal ? 'left' : 'right';
-  const basisLabel = direction === 'up'
-    ? (basis === 'pp' ? '%p 증가' : '% 증가율')
-    : (basis === 'pp' ? '%p 감소' : '% 감소율');
+  const basisNoun = direction === 'up' ? (basis === 'pp' ? '%p 증가폭' : '증가율') : (basis === 'pp' ? '%p 감소폭' : '감소율');
+  const isRateType = basis === 'ratio';
+  const higherWord = isRateType ? '높다' : '크다', lowerWord = isRateType ? '낮다' : '작다';
   const item = pick(PERCENT_ITEM_POOL);
   const [catA, catB] = pickTwoCategories();
-  const leftText = `${catA} ${item}<br>${a.before}% → ${a.after}%`;
-  const rightText = `${catB} ${item}<br>${b.before}% → ${b.after}%`;
+  const year1 = rand(2015, 2022), year2 = year1 + 1;
+  const claimAHigher = Math.random() < 0.5;
+  const claimWord = claimAHigher ? higherWord : lowerWord;
+  const correctOx = (claimAHigher === (correctChoice === 'left')) ? 'O' : 'X';
+  const statement = `① ${year2}년 ${catA} ${item}의 전년 대비 ${basisNoun}은 ${catB} ${item}의 전년 대비 ${basisNoun}보다 ${claimWord}.`;
+  const tableHtml = renderOxTable(
+    [`${item}(%)`, `${year1}`, `${year2}`],
+    [[catA, `${a.before}%`, `${a.after}%`], [catB, `${b.before}%`, `${b.after}%`]],
+    statement
+  );
   return {
-    answerType: 'choice',
-    growthQuestion: `${basisLabel}이 더 큰 쪽은?`,
-    render: {
-      isHtml: true,
-      content: `<div class="compare-block">
-        <div class="compare-side"><span class="side-label">A</span>${leftText}</div>
-        <div class="compare-vs">?</div>
-        <div class="compare-side"><span class="side-label">B</span>${rightText}</div>
-      </div>`,
-    },
-    correctChoice,
-    promptText: `[${basisLabel}] A(${catA} ${item}): ${a.before}% → ${a.after}%  vs  B(${catB} ${item}): ${b.before}% → ${b.after}%`,
-    infoText: `A ${basisLabel}=${aVal.toFixed(1)}${basis === 'pp' ? '%p' : '%'}, B ${basisLabel}=${bVal.toFixed(1)}${basis === 'pp' ? '%p' : '%'}`,
+    answerType: 'ox',
+    render: { isHtml: true, content: tableHtml },
+    correctChoice: correctOx,
+    promptText: `${statement} [표: ${catA} ${a.before}%→${a.after}%, ${catB} ${b.before}%→${b.after}%]`,
+    infoText: `A ${basisNoun}=${aVal.toFixed(1)}${isRateType ? '%' : '%p'}, B ${basisNoun}=${bVal.toFixed(1)}${isRateType ? '%' : '%p'}`,
   };
 }
 
@@ -821,26 +847,23 @@ function genIndexCompare(level) {
   function ratio() { return Math.max(a.value, b.value) / Math.min(a.value, b.value); }
   while (!(ratio() >= 1.01 && ratio() <= 1.15) && tries < 40) { b = randSidedFraction(range, kind); tries++; }
   const correctChoice = a.value > b.value ? 'left' : 'right';
-  // "95 → 40"처럼만 쓰면 증가율 모드의 "이전값 → 나중값" 화살표와 똑같아 보여 헷갈린다.
-  // 어느 게 기준값이고 어느 게 비교값인지 반드시 글자로 밝히고, 실제 자료해석처럼 항목명도 붙인다.
   const item = pick(QUANTITY_ITEM_POOL);
   const [catA, catB] = pickTwoCategories();
-  const leftText = `${catA} ${item.name}(${item.unit})<br>기준 ${a.den} · 비교 ${a.num}`;
-  const rightText = `${catB} ${item.name}(${item.unit})<br>기준 ${b.den} · 비교 ${b.num}`;
   const aIndex = (a.value * 100).toFixed(1), bIndex = (b.value * 100).toFixed(1);
+  const claimAHigher = Math.random() < 0.5;
+  const claimWord = claimAHigher ? '높다' : '낮다';
+  const correctOx = (claimAHigher === (correctChoice === 'left')) ? 'O' : 'X';
+  const statement = `① 기준연도를 100으로 뒀을 때, ${catA} ${item.name} 지수는 ${catB} ${item.name} 지수보다 ${claimWord}.`;
+  const tableHtml = renderOxTable(
+    [`${item.name}(${item.unit})`, '기준연도', '비교연도'],
+    [[catA, a.den, a.num], [catB, b.den, b.num]],
+    statement
+  );
   return {
-    answerType: 'choice',
-    growthQuestion: '기준연도=100 지수로 환산하면 어느 쪽이 더 큰가?',
-    render: {
-      isHtml: true,
-      content: `<div class="compare-block">
-        <div class="compare-side"><span class="side-label">A</span>${leftText}</div>
-        <div class="compare-vs">?</div>
-        <div class="compare-side"><span class="side-label">B</span>${rightText}</div>
-      </div>`,
-    },
-    correctChoice,
-    promptText: `A(${catA} ${item.name}): 기준${a.den}/비교${a.num}  vs  B(${catB} ${item.name}): 기준${b.den}/비교${b.num}`,
+    answerType: 'ox',
+    render: { isHtml: true, content: tableHtml },
+    correctChoice: correctOx,
+    promptText: `${statement} [표: ${catA} 기준${a.den}/비교${a.num}, ${catB} 기준${b.den}/비교${b.num}]`,
     infoText: `A 지수=${aIndex}, B 지수=${bIndex}`,
   };
 }
@@ -967,8 +990,6 @@ function nextProblem() {
   const problemEl = document.getElementById('quiz-problem');
   if (p.answerType === 'sort') {
     problemEl.innerHTML = `<div style="font-size:0.95rem;color:var(--label-fg);">네 분수를 큰 순서로 탭하세요</div>`;
-  } else if (p.growthQuestion) {
-    problemEl.innerHTML = `<div id="growth-question">${p.growthQuestion}</div>` + p.render.content;
   } else if (p.render.isHtml) {
     problemEl.innerHTML = p.render.content;
   } else {
@@ -978,6 +999,7 @@ function nextProblem() {
   document.getElementById('answer-numeric').style.display = p.answerType === 'numeric' ? 'block' : 'none';
   document.getElementById('answer-choice').style.display = p.answerType === 'choice' ? 'block' : 'none';
   document.getElementById('answer-sort').style.display = p.answerType === 'sort' ? 'block' : 'none';
+  document.getElementById('answer-ox').style.display = p.answerType === 'ox' ? 'block' : 'none';
 
   if (p.answerType === 'numeric') {
     const input = document.getElementById('quiz-answer');
@@ -1023,8 +1045,10 @@ document.getElementById('sort-reset-btn').addEventListener('click', () => {
 });
 function arraysEqual(a, b) { return a.length === b.length && a.every((v, i) => v === b[i]); }
 
-document.getElementById('choice-left').addEventListener('click', () => submitResult(state.currentProblem.correctChoice === 'left', '위(A)'));
-document.getElementById('choice-right').addEventListener('click', () => submitResult(state.currentProblem.correctChoice === 'right', '아래(B)'));
+document.getElementById('choice-left').addEventListener('click', () => submitResult(state.currentProblem.correctChoice === 'left', '왼쪽(A)'));
+document.getElementById('choice-right').addEventListener('click', () => submitResult(state.currentProblem.correctChoice === 'right', '오른쪽(B)'));
+document.getElementById('ox-o-btn').addEventListener('click', () => submitResult(state.currentProblem.correctChoice === 'O', 'O'));
+document.getElementById('ox-x-btn').addEventListener('click', () => submitResult(state.currentProblem.correctChoice === 'X', 'X'));
 
 function submitAnswer() {
   const input = document.getElementById('quiz-answer');
@@ -1042,6 +1066,7 @@ function submitResult(isCorrect, givenLabel) {
   let answerLabel;
   if (p.answerType === 'numeric') answerLabel = String(p.correctAnswer);
   else if (p.answerType === 'choice') answerLabel = p.correctChoice === 'left' ? '왼쪽(A)' : '오른쪽(B)';
+  else if (p.answerType === 'ox') answerLabel = p.correctChoice;
   else answerLabel = p.correctOrder.map(i => p.items[i].num + '/' + p.items[i].den).join(' > ');
 
   state.results.push({
