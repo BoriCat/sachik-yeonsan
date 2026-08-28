@@ -443,13 +443,16 @@ const MULC_LEVELS = {
 };
 function genMulCompare(level) {
   const cfg = MULC_LEVELS[level];
-  function side() {
-    const intPart = rand(...cfg.intRange);
-    const decPart = randFloat(cfg.decRange[0], cfg.decRange[1], cfg.decDigits);
-    return { intPart, decPart, product: intPart * decPart };
-  }
-  let a = side(), b = side(), tries = 0;
-  while (Math.abs(a.product - b.product) / Math.max(a.product, b.product) < 0.02 && tries < 20) { b = side(); tries++; }
+  // 정수와 소수가 서로 반대 방향으로 크도록 강제한다 (한쪽이 두 값 다 크면 계산 없이도 눈으로 보여서 훈련 의미가 없다.
+  // 실제 비타민 자료 예시를 확인해보면 8문항 전부 이 교차 구조였다).
+  const step = cfg.decDigits === 1 ? 0.1 : 0.01;
+  let intA = rand(...cfg.intRange), intB = rand(...cfg.intRange), tries = 0;
+  while (intA === intB && tries < 20) { intB = rand(...cfg.intRange); tries++; }
+  const smallDec = randFloat(cfg.decRange[0], cfg.decRange[1] - step, cfg.decDigits);
+  const bigDec = randFloat(smallDec + step, cfg.decRange[1], cfg.decDigits);
+  const [decA, decB] = intA > intB ? [smallDec, bigDec] : [bigDec, smallDec];
+  const a = { intPart: intA, decPart: decA, product: intA * decA };
+  const b = { intPart: intB, decPart: decB, product: intB * decB };
   const correctChoice = a.product > b.product ? 'left' : 'right';
   const diffPercent = Math.abs(a.product - b.product) / Math.min(a.product, b.product) * 100;
   const leftText = `${a.intPart} × ${a.decPart}`;
@@ -521,10 +524,16 @@ function genDivCompare(divType, level) {
 
 /* ---------- 증가율/증가량 비교 ---------- */
 const GROWTH_LEVELS = { 1: [10, 99], 2: [50, 500], 3: [100, 9999] };
-function genGrowthSide(range) {
+function genGrowthSide(range, direction) {
   const before = rand(...range);
-  let after = rand(...range);
-  if (after === before) after = before + rand(1, Math.max(1, Math.floor(range[1] * 0.2)));
+  const maxChange = Math.max(2, Math.round((range[1] - range[0]) * 0.6));
+  let after;
+  if (direction === 'up') {
+    after = before + rand(1, maxChange);
+  } else {
+    const maxDown = Math.max(1, Math.min(maxChange, before - 1));
+    after = before - rand(1, maxDown);
+  }
   const rate = (after - before) / before * 100;
   const amount = after - before;
   return { before, after, rate, amount };
@@ -532,13 +541,24 @@ function genGrowthSide(range) {
 function genGrowthCompare(growthType, level) {
   const range = GROWTH_LEVELS[level];
   const basis = growthType === 'mix' ? pick(['rate', 'amount']) : growthType;
-  let a = genGrowthSide(range), b = genGrowthSide(range), tries = 0;
-  function diff() { return basis === 'rate' ? Math.abs(a.rate - b.rate) : Math.abs(a.amount - b.amount); }
-  while (diff() < (basis === 'rate' ? 1 : 1) && tries < 20) { b = genGrowthSide(range); tries++; }
-  const aVal = basis === 'rate' ? a.rate : a.amount;
-  const bVal = basis === 'rate' ? b.rate : b.amount;
+  // 증가/감소를 섞으면 부호만 보고도 답이 나오므로(훈련 의미 없음), 한 문제 안에서는 방향을 통일한다.
+  const direction = pick(['up', 'down']);
+  let a = genGrowthSide(range, direction), b = genGrowthSide(range, direction), tries = 0;
+  function magnitude(x) { return Math.abs(basis === 'rate' ? x.rate : x.amount); }
+  // 한쪽이 계산 없이 봐도 압도적으로 크면(비율 3배 초과) 의미 없는 문제이므로,
+  // 너무 근소하지도(1.02배 미만) 너무 압도적이지도(3배 초과) 않은 범위로 맞춘다.
+  function isGoodPair() {
+    const av = magnitude(a), bv = magnitude(b);
+    if (av === 0 || bv === 0) return false;
+    const ratio = Math.max(av, bv) / Math.min(av, bv);
+    return ratio >= 1.02 && ratio <= 3.0;
+  }
+  while (!isGoodPair() && tries < 40) { b = genGrowthSide(range, direction); tries++; }
+  const aVal = magnitude(a), bVal = magnitude(b);
   const correctChoice = aVal > bVal ? 'left' : 'right';
-  const basisLabel = basis === 'rate' ? '증가율(%)' : '증가량';
+  const basisLabel = direction === 'up'
+    ? (basis === 'rate' ? '증가율(%)' : '증가량')
+    : (basis === 'rate' ? '감소율(%)' : '감소량');
   const leftText = `${a.before} → ${a.after}`;
   const rightText = `${b.before} → ${b.after}`;
   return {
