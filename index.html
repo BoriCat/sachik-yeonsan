@@ -480,12 +480,9 @@ function selectedOf(id, attr) {
 }
 
 /* ---------- 기초 암산 ---------- */
-const DIFFICULTY = {
-  1: { addSub: [1, 99], mulSmall: [1, 9], mulBig: [1, 9], divDivisor: [2, 9], divQuotient: [2, 20] },
-  2: { addSub: [10, 999], mulSmall: [2, 30], mulBig: [2, 99], divDivisor: [2, 20], divQuotient: [2, 50] },
-  // 어려움: 726×52처럼 3자리×2자리(30 초과)도 실전에서 연습하는 조합이라 mulSmall을 2자리 전체로 넓힘.
-  3: { addSub: [100, 9999], mulSmall: [2, 99], mulBig: [10, 999], divDivisor: [2, 50], divQuotient: [5, 99] },
-};
+// 난이도 선택지를 없애고 연산마다 실전에 필요한 자릿수로 고정했다(2026-08-29).
+// 곱셈: 726×52처럼 3자리×2자리(30 초과)도 실전에서 연습하는 조합이라 mulSmall을 2자리 전체로 넓힘.
+const BASIC_CONFIG = { mulSmall: [2, 99], mulBig: [10, 999], divDivisor: [2, 50], divQuotient: [5, 99] };
 // 덧셈은 4자리까지 가면 어차피 천/백/십/일 자리로 나눠서 덩어리로 계산하게 되니(따로 훈련할 필요 없음),
 // 한자리~세자리 조합(3자리는 2자리와 짝지을 때만)으로만 낸다.
 const ADD_DIGIT_RANGES = { 1: [1, 9], 2: [10, 99], 3: [100, 999] };
@@ -504,23 +501,22 @@ function multiplyHint(a, b) {
   return `가르기: ${big} × ${tens} + ${big} × ${ones} 로 나눠서 계산해보세요`;
 }
 
-function genBasic(ops, level, format) {
+function genBasic(ops, format) {
   const opSymbol = pick(ops);
-  const lv = DIFFICULTY[level];
   let a, b, opChar, answer;
   if (opSymbol === '+') {
     [a, b] = genAddPair(); opChar = '+'; answer = a + b;
   } else if (opSymbol === '-') {
-    a = rand(...lv.addSub); b = rand(...lv.addSub);
+    [a, b] = genAddPair();
     if (a < b) [a, b] = [b, a];
     opChar = '-'; answer = a - b;
   } else if (opSymbol === '*') {
-    a = rand(...lv.mulSmall); b = rand(...lv.mulBig);
+    a = rand(...BASIC_CONFIG.mulSmall); b = rand(...BASIC_CONFIG.mulBig);
     if (Math.random() < 0.5) [a, b] = [b, a];
     opChar = '×'; answer = a * b;
   } else {
-    const divisor = rand(...lv.divDivisor);
-    const quotient = rand(...lv.divQuotient);
+    const divisor = rand(...BASIC_CONFIG.divDivisor);
+    const quotient = rand(...BASIC_CONFIG.divQuotient);
     a = divisor * quotient; b = divisor; opChar = '÷'; answer = quotient;
   }
   let render;
@@ -1032,7 +1028,7 @@ function gradeLabel(mode, totalSeconds, count) {
 
 /* ---------- 문제 생성 라우터 ---------- */
 function generateProblem() {
-  if (state.mode === 'basic') return genBasic(state.ops, state.level, state.format);
+  if (state.mode === 'basic') return genBasic(state.ops, state.format);
   if (state.mode === 'mulCompare') return genMulCompare(state.level);
   if (state.mode === 'divCompare') return genDivCompare(state.divType, state.level);
   if (state.mode === 'growthCompare') return genGrowthCompare(state.growthType, state.level);
