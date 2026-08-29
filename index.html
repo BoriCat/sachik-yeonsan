@@ -200,8 +200,8 @@
         <div class="option-btns" id="op-btns">
           <button class="opt-btn" data-op="+">덧셈</button>
           <button class="opt-btn" data-op="-">뺄셈</button>
-          <button class="opt-btn" data-op="*">곱셈</button>
-          <button class="opt-btn" data-op="/">나눗셈</button>
+          <button class="opt-btn" data-op="*">곱셈 (19단)</button>
+          <button class="opt-btn" data-op="/">나눗셈 (분수%)</button>
           <button class="opt-btn selected" data-op="mix" style="grid-column: 1 / span 2;">전체 (랜덤 혼합)</button>
         </div>
       </div>
@@ -481,8 +481,8 @@ function selectedOf(id, attr) {
 
 /* ---------- 기초 암산 ---------- */
 // 난이도 선택지를 없애고 연산마다 실전에 필요한 자릿수로 고정했다(2026-08-29).
-// 곱셈: 726×52처럼 3자리×2자리(30 초과)도 실전에서 연습하는 조합이라 mulSmall을 2자리 전체로 넓힘.
-const BASIC_CONFIG = { mulSmall: [2, 99], mulBig: [10, 999], divDivisor: [2, 50], divQuotient: [5, 99] };
+// 곱셈: "19단"(2~19 사이 수를 곱하는 감각)이 실전 특급계산법의 기본이라, 한쪽을 그 범위로 좁힘.
+const BASIC_CONFIG = { mulSmall: [2, 19], mulBig: [10, 999] };
 // 덧셈은 4자리까지 가면 어차피 천/백/십/일 자리로 나눠서 덩어리로 계산하게 되니(따로 훈련할 필요 없음),
 // 한자리~세자리 조합(3자리는 2자리와 짝지을 때만)으로만 낸다.
 const ADD_DIGIT_RANGES = { 1: [1, 9], 2: [10, 99], 3: [100, 999] };
@@ -494,16 +494,25 @@ function genAddPair() {
 // 두 자리 곱셈은 "50+2"처럼 십의 자리+나머지로 쪼개 계산하는 게 실전 특급계산법이다.
 function multiplyHint(a, b) {
   const small = Math.min(a, b), big = Math.max(a, b);
-  if (small < 10) return '';
+  if (small <= 19) return ''; // 19단 범위는 그냥 외운 값을 바로 쓰는 게 목적이라 쪼갤 필요 없음
   const tens = Math.floor(small / 10) * 10;
   const ones = small - tens;
   if (ones === 0) return '';
   return `가르기: ${big} × ${tens} + ${big} × ${ones} 로 나눠서 계산해보세요`;
 }
+// 나눗셈: "아무 몫이나 구하기"는 암기 훈련으로 의미가 약해서(실측 조사 결과, 자료해석 필수암기 목록에
+// "나눗셈 몫" 항목은 따로 없었고 대신 1/n=% 변환표가 그 역할을 함), m/n을 %로 바꾸는 훈련으로 대체했다.
+// 분모는 19단과 같은 2~19(외울 수 있는 범위), 분자는 1/n 값에 곱해서 바로 답을 내는 방식.
+const FRAC_DENOM_RANGE = [2, 19];
+function fracPercentHint(m, n) {
+  if (m === 1) return '';
+  const unit = Math.round(1000 / n) / 10;
+  return `1/${n} = ${unit}%에 분자 ${m}을 곱해보세요`;
+}
 
 function genBasic(ops, format) {
   const opSymbol = pick(ops);
-  let a, b, opChar, answer;
+  let a, b, opChar, answer, answerDecimals = 0, hint = '', render;
   if (opSymbol === '+') {
     [a, b] = genAddPair(); opChar = '+'; answer = a + b;
   } else if (opSymbol === '-') {
@@ -514,28 +523,35 @@ function genBasic(ops, format) {
     a = rand(...BASIC_CONFIG.mulSmall); b = rand(...BASIC_CONFIG.mulBig);
     if (Math.random() < 0.5) [a, b] = [b, a];
     opChar = '×'; answer = a * b;
+    hint = multiplyHint(a, b);
   } else {
-    const divisor = rand(...BASIC_CONFIG.divDivisor);
-    const quotient = rand(...BASIC_CONFIG.divQuotient);
-    a = divisor * quotient; b = divisor; opChar = '÷'; answer = quotient;
+    const n = rand(...FRAC_DENOM_RANGE);
+    const m = rand(1, n - 1);
+    a = m; b = n; opChar = '÷';
+    answer = Math.round(m / n * 1000) / 10;
+    answerDecimals = 1;
+    hint = fracPercentHint(m, n);
+    render = { isHtml: true, content: `<span class="frac-inline" style="font-size:2rem;"><span class="fnum">${a}</span><span class="fden">${b}</span></span> = ?%` };
   }
-  let render;
-  if (format === 'horizontal') {
-    render = { isHtml: false, content: `${a} ${opChar} ${b} = ?` };
-  } else {
-    const aStr = String(a), bStr = String(b);
-    const width = Math.max(aStr.length, bStr.length);
-    const line1 = '  ' + aStr.padStart(width, ' ');
-    const line2 = opChar + ' ' + bStr.padStart(width, ' ');
-    const rule = '-'.repeat(Math.max(line1.length, line2.length));
-    render = { isHtml: true, content: `<pre class="vert-problem">${line1}\n${line2}\n${rule}</pre>` };
+  if (!render) {
+    if (format === 'horizontal') {
+      render = { isHtml: false, content: `${a} ${opChar} ${b} = ?` };
+    } else {
+      const aStr = String(a), bStr = String(b);
+      const width = Math.max(aStr.length, bStr.length);
+      const line1 = '  ' + aStr.padStart(width, ' ');
+      const line2 = opChar + ' ' + bStr.padStart(width, ' ');
+      const rule = '-'.repeat(Math.max(line1.length, line2.length));
+      render = { isHtml: true, content: `<pre class="vert-problem">${line1}\n${line2}\n${rule}</pre>` };
+    }
   }
   return {
     answerType: 'numeric',
+    answerDecimals,
     render,
     correctAnswer: answer,
-    promptText: `${a} ${opChar} ${b}`,
-    hint: opChar === '×' ? multiplyHint(a, b) : '',
+    promptText: opChar === '÷' ? `${a}/${b} = ?%` : `${a} ${opChar} ${b}`,
+    hint,
   };
 }
 
