@@ -491,15 +491,6 @@ function genAddPair() {
   const [da, db] = pick(ADD_DIGIT_COMBOS);
   return [rand(...ADD_DIGIT_RANGES[da]), rand(...ADD_DIGIT_RANGES[db])];
 }
-// 두 자리 곱셈은 "50+2"처럼 십의 자리+나머지로 쪼개 계산하는 게 실전 특급계산법이다.
-function multiplyHint(a, b) {
-  const small = Math.min(a, b), big = Math.max(a, b);
-  if (small <= 19) return ''; // 19단 범위는 그냥 외운 값을 바로 쓰는 게 목적이라 쪼갤 필요 없음
-  const tens = Math.floor(small / 10) * 10;
-  const ones = small - tens;
-  if (ones === 0) return '';
-  return `가르기: ${big} × ${tens} + ${big} × ${ones} 로 나눠서 계산해보세요`;
-}
 // 나눗셈: "아무 몫이나 구하기"는 암기 훈련으로 의미가 약해서(실측 조사 결과, 자료해석 필수암기 목록에
 // "나눗셈 몫" 항목은 따로 없었고 대신 1/n=% 변환표가 그 역할을 함), m/n을 %로 바꾸는 훈련으로 대체했다.
 // 분모는 19단과 같은 2~19(외울 수 있는 범위), 분자는 1/n 값에 곱해서 바로 답을 내는 방식.
@@ -523,7 +514,6 @@ function genBasic(ops, format) {
     a = rand(...BASIC_CONFIG.mulSmall); b = rand(...BASIC_CONFIG.mulBig);
     if (Math.random() < 0.5) [a, b] = [b, a];
     opChar = '×'; answer = a * b;
-    hint = multiplyHint(a, b);
   } else {
     const n = rand(...FRAC_DENOM_RANGE);
     const m = rand(1, n - 1);
